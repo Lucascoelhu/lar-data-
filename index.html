@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Memórias Secretas</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    
+    <style>
+        :root {
+            --primary: #ff4081;
+            --primary-dark: #c60055;
+            --bg: #fff5f8;
+            --card: #ffffff;
+            --text: #4a4a4a;
+        }
+
+        /* Previne seleção de texto e comportamento de arrastar no mobile */
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            background: var(--bg); 
+            background-image: radial-gradient(#ffc1e3 0.5px, transparent 0.5px);
+            background-size: 20px 20px;
+            display: flex; justify-content: center; align-items: center; 
+            min-height: 100vh; margin: 0; color: var(--text);
+            overflow-x: hidden;
+        }
+
+        .container { 
+            text-align: center; background: var(--card); 
+            padding: 30px 20px; border-radius: 30px; 
+            box-shadow: 0 15px 35px rgba(216, 27, 96, 0.15); 
+            width: 92%; max-width: 450px; margin: 20px auto;
+        }
+
+        /* TELA INICIAL */
+        #home-screen h1 { 
+            color: var(--primary); font-size: 4rem;
+            cursor: pointer; user-select: none; 
+            margin: 0; padding: 20px;
+            -webkit-user-select: none; /* Mobile Safari */
+        }
+        #home-screen p { color: #9b9b9b; font-size: 0.9rem; margin-top: 10px; }
+
+        /* DIÁRIO */
+        #diary-content { display: none; animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        h2 { color: var(--primary-dark); font-weight: 300; font-size: 1.4rem; margin-bottom: 20px; }
+
+        textarea { 
+            width: 100%; height: 120px; padding: 15px; 
+            border: 2px solid #fce4ec; border-radius: 15px; 
+            font-size: 16px; /* Evita zoom automático no iOS */
+            outline: none; transition: border-color 0.3s; margin-bottom: 10px;
+        }
+        textarea:focus { border-color: var(--primary); }
+
+        .file-upload { margin-bottom: 15px; text-align: left; font-size: 0.8rem; }
+        input[type="file"] { width: 100%; font-size: 0.8rem; }
+
+        .main-btn { 
+            background: linear-gradient(45deg, var(--primary), #ff80ab);
+            color: white; border: none; padding: 16px; 
+            border-radius: 15px; cursor: pointer; width: 100%; 
+            font-weight: bold; font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(255, 64, 129, 0.2);
+        }
+
+        /* LISTA DE MEMÓRIAS */
+        #entries-container { 
+            margin-top: 25px; max-height: 60vh; 
+            overflow-y: auto; padding-right: 5px;
+        }
+
+        .entry { 
+            background: #fff; border-radius: 18px;
+            margin-bottom: 15px; padding: 15px; 
+            text-align: left; position: relative; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            border: 1px solid #fff0f5;
+        }
+        .entry-date { font-size: 0.65rem; color: #bbb; margin-bottom: 5px; }
+        .entry-comment { font-size: 0.95rem; line-height: 1.4; color: #444; word-wrap: break-word; }
+        .entry img { width: 100%; border-radius: 12px; margin-top: 10px; display: block; }
+
+        .btn-delete { 
+            position: absolute; top: 10px; right: 10px; 
+            background: #fdf2f5; color: #ff80ab; 
+            border: none; border-radius: 50%; 
+            width: 30px; height: 30px; font-size: 12px;
+        }
+
+        .lock-btn { margin-top: 20px; background: none; border: none; color: #bbb; font-size: 0.8rem; text-decoration: underline; padding: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="home-screen">
+        <h1 id="secret-trigger">❤️</h1>
+        <p>Pressione e segure o coração</p>
+    </div>
+
+    <div id="diary-content">
+        <h2>Histórico - Painel</h2>
+        <textarea id="comment" placeholder="Escreva algo especial..."></textarea>
+        <div class="file-upload">
+            <input type="file" id="imageInput" accept="image/*">
+        </div>
+        <button class="main-btn" onclick="saveEntry()">Salvar na Nuvem</button>
+        <div id="entries-container"></div>
+        <button class="lock-btn" onclick="location.reload()">Sair e Trancar</button>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAiwLZG2g_3S7pLkdXQtYqz14rTgd1FPOg",
+        authDomain: "meudiario-59cba.firebaseapp.com",
+        databaseURL: "https://meudiario-59cba-default-rtdb.firebaseio.com", 
+        projectId: "meudiario-59cba",
+        storageBucket: "meudiario-59cba.firebasestorage.app",
+        messagingSenderId: "426502564208",
+        appId: "1:426502564208:web:07839ac5ffd480f95547b5"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const trigger = document.getElementById('secret-trigger');
+    let timer;
+
+    // Otimização para Mobile (Touch) e Desktop (Mouse)
+    trigger.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Previne o menu de contexto do navegador
+        timer = setTimeout(askPassword, 1500);
+    });
+    trigger.addEventListener('touchend', () => clearTimeout(timer));
+    
+    trigger.addEventListener('mousedown', () => timer = setTimeout(askPassword, 1500));
+    trigger.addEventListener('mouseup', () => clearTimeout(timer));
+
+    function askPassword() {
+        const senha = prompt("Digite a senha de acesso:");
+        if (senha === "4691") {
+            document.getElementById('home-screen').style.display = 'none';
+            document.getElementById('diary-content').style.display = 'block';
+            loadEntries();
+        } else if (senha !== null) {
+            alert("❌ Senha incorreta. Acesso negado!");
+        }
+    }
+
+    function saveEntry() {
+        const comment = document.getElementById('comment').value;
+        const file = document.getElementById('imageInput').files[0];
+        const date = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+
+        if (!comment && !file) return;
+
+        const btn = document.querySelector('.main-btn'); 
+        btn.innerText = "Enviando...";
+        btn.disabled = true;
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                pushToFirebase({ date, comment, image: e.target.result });
+            };
+            reader.readAsDataURL(file);
+        } else {
+            pushToFirebase({ date, comment, image: "" });
+        }
+    }
+
+    function pushToFirebase(data) {
+        db.ref('entries').push(data).then(() => {
+            const btn = document.querySelector('.main-btn');
+            btn.innerText = "Salvar na Nuvem";
+            btn.disabled = false;
+            document.getElementById('comment').value = '';
+            document.getElementById('imageInput').value = '';
+        });
+    }
+
+    function loadEntries() {
+        db.ref('entries').on('value', (snapshot) => {
+            const container = document.getElementById('entries-container');
+            container.innerHTML = '';
+            const data = snapshot.val();
+            if (data) {
+                Object.keys(data).reverse().forEach(key => {
+                    const item = data[key];
+                    container.innerHTML += `
+                        <div class="entry">
+                            <button class="btn-delete" onclick="deleteEntry('${key}')">✕</button>
+                            <div class="entry-date">${item.date}</div>
+                            <div class="entry-comment">${item.comment}</div>
+                            ${item.image ? `<img src="${item.image}">` : ''}
+                        </div>
+                    `;
+                });
+            }
+        });
+    }
+
+    function deleteEntry(id) {
+        if(confirm("Deseja apagar esta memória?")) {
+            db.ref('entries/' + id).remove();
+        }
+    }
+</script>
+</body>
+</html>
