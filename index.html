@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Memórias Secretas</title>
+    <title>L . R . S — Archive</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     
@@ -16,7 +16,6 @@
             --text: #4a4a4a;
         }
 
-        /* Previne seleção de texto e comportamento de arrastar no mobile */
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 
         body { 
@@ -36,31 +35,35 @@
             width: 92%; max-width: 450px; margin: 20px auto;
         }
 
-        /* TELA INICIAL */
+        /* TELA INICIAL COM ANIMAÇÃO */
         #home-screen h1 { 
-            color: var(--primary); font-size: 4rem;
+            color: var(--primary); font-size: 5rem;
             cursor: pointer; user-select: none; 
             margin: 0; padding: 20px;
-            -webkit-user-select: none; /* Mobile Safari */
+            -webkit-user-select: none;
+            animation: pulse 1.5s infinite; /* Batida de coração */
         }
-        #home-screen p { color: #9b9b9b; font-size: 0.9rem; margin-top: 10px; }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+        #home-screen p { color: #bbb; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; }
 
-        /* DIÁRIO */
+        /* PAINEL DO DIÁRIO */
         #diary-content { display: none; animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         h2 { color: var(--primary-dark); font-weight: 300; font-size: 1.4rem; margin-bottom: 20px; }
 
         textarea { 
             width: 100%; height: 120px; padding: 15px; 
             border: 2px solid #fce4ec; border-radius: 15px; 
-            font-size: 16px; /* Evita zoom automático no iOS */
-            outline: none; transition: border-color 0.3s; margin-bottom: 10px;
+            font-size: 16px; outline: none; transition: border-color 0.3s; margin-bottom: 10px;
         }
         textarea:focus { border-color: var(--primary); }
 
-        .file-upload { margin-bottom: 15px; text-align: left; font-size: 0.8rem; }
-        input[type="file"] { width: 100%; font-size: 0.8rem; }
+        .file-upload { margin-bottom: 15px; text-align: left; font-size: 0.8rem; color: #888; }
 
         .main-btn { 
             background: linear-gradient(45deg, var(--primary), #ff80ab);
@@ -72,7 +75,7 @@
 
         /* LISTA DE MEMÓRIAS */
         #entries-container { 
-            margin-top: 25px; max-height: 60vh; 
+            margin-top: 25px; max-height: 55vh; 
             overflow-y: auto; padding-right: 5px;
         }
 
@@ -87,12 +90,15 @@
         .entry-comment { font-size: 0.95rem; line-height: 1.4; color: #444; word-wrap: break-word; }
         .entry img { width: 100%; border-radius: 12px; margin-top: 10px; display: block; }
 
+        /* Botão apagar mais seguro e discreto */
         .btn-delete { 
             position: absolute; top: 10px; right: 10px; 
-            background: #fdf2f5; color: #ff80ab; 
+            background: transparent; color: #eee; 
             border: none; border-radius: 50%; 
             width: 30px; height: 30px; font-size: 12px;
+            transition: color 0.3s;
         }
+        .entry:hover .btn-delete { color: #ff80ab; } /* Só aparece bem no hover ou toque */
 
         .lock-btn { margin-top: 20px; background: none; border: none; color: #bbb; font-size: 0.8rem; text-decoration: underline; padding: 10px; }
     </style>
@@ -102,12 +108,12 @@
 <div class="container">
     <div id="home-screen">
         <h1 id="secret-trigger">❤️</h1>
-        <p>Pressione e segure o coração</p>
+        <p>Apenas Leitura</p>
     </div>
 
     <div id="diary-content">
-        <h2>Histórico - Painel</h2>
-        <textarea id="comment" placeholder="Escreva algo especial..."></textarea>
+        <h2>Painel de Memórias</h2>
+        <textarea id="comment" placeholder="Escreva algo sobre hoje..."></textarea>
         <div class="file-upload">
             <input type="file" id="imageInput" accept="image/*">
         </div>
@@ -118,6 +124,7 @@
 </div>
 
 <script>
+    // CONFIGURAÇÃO DO FIREBASE
     const firebaseConfig = {
         apiKey: "AIzaSyAiwLZG2g_3S7pLkdXQtYqz14rTgd1FPOg",
         authDomain: "meudiario-59cba.firebaseapp.com",
@@ -134,24 +141,26 @@
     const trigger = document.getElementById('secret-trigger');
     let timer;
 
-    // Otimização para Mobile (Touch) e Desktop (Mouse)
-    trigger.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // Previne o menu de contexto do navegador
+    // Lógica para Mobile e Desktop (Segurar por 1.5 segundos)
+    const startAction = (e) => {
+        if (e.type === 'touchstart') e.preventDefault();
         timer = setTimeout(askPassword, 1500);
-    });
-    trigger.addEventListener('touchend', () => clearTimeout(timer));
-    
-    trigger.addEventListener('mousedown', () => timer = setTimeout(askPassword, 1500));
-    trigger.addEventListener('mouseup', () => clearTimeout(timer));
+    };
+    const endAction = () => clearTimeout(timer);
+
+    trigger.addEventListener('touchstart', startAction);
+    trigger.addEventListener('touchend', endAction);
+    trigger.addEventListener('mousedown', startAction);
+    trigger.addEventListener('mouseup', endAction);
 
     function askPassword() {
-        const senha = prompt("Digite a senha de acesso:");
+        const senha = prompt("Identificação necessária:");
         if (senha === "4691") {
             document.getElementById('home-screen').style.display = 'none';
             document.getElementById('diary-content').style.display = 'block';
             loadEntries();
         } else if (senha !== null) {
-            alert("❌ Senha incorreta. Acesso negado!");
+            alert("❌ Acesso negado. Senha incorreta.");
         }
     }
 
@@ -162,8 +171,8 @@
 
         if (!comment && !file) return;
 
-        const btn = document.querySelector('.main-btn'); 
-        btn.innerText = "Enviando...";
+        const btn = document.querySelector('.main-btn');
+        btn.innerText = "Sincronizando...";
         btn.disabled = true;
 
         if (file) {
@@ -197,7 +206,7 @@
                     const item = data[key];
                     container.innerHTML += `
                         <div class="entry">
-                            <button class="btn-delete" onclick="deleteEntry('${key}')">✕</button>
+                            <button class="btn-delete" onclick="deleteEntry('${key}')" title="Apagar">✕</button>
                             <div class="entry-date">${item.date}</div>
                             <div class="entry-comment">${item.comment}</div>
                             ${item.image ? `<img src="${item.image}">` : ''}
@@ -209,7 +218,9 @@
     }
 
     function deleteEntry(id) {
-        if(confirm("Deseja apagar esta memória?")) {
+        // Confirmação de segurança para não apagar sem querer
+        const certeza = confirm("⚠️ Você tem certeza que deseja apagar esta memória permanentemente?");
+        if (certeza) {
             db.ref('entries/' + id).remove();
         }
     }
