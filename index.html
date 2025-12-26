@@ -4,162 +4,115 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Configurações de Privacidade</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     
     <style>
         :root {
             --primary: #bb86fc;
-            --secondary: #9965f4;
             --bg: #0b0b0d;
             --card: rgba(25, 25, 28, 0.95);
-            --text: #ffffff;
             --text-dim: #71717a;
         }
 
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 
         body { 
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg);
-            background-image: 
-                radial-gradient(circle at 50% -20%, #2a1b4d 0%, transparent 50%),
-                radial-gradient(circle at 0% 100%, #1a0f2e 0%, transparent 40%);
+            background-image: radial-gradient(circle at 50% -20%, #2a1b4d 0%, transparent 50%);
             display: flex; justify-content: center; align-items: center; 
-            min-height: 100vh; margin: 0; color: var(--text);
+            min-height: 100vh; margin: 0; color: #fff;
         }
 
-        /* --- TELA 1: DISFARCE --- */
+        /* TELA 1: DISFARCE */
         #disguise-screen {
             width: 90%; max-width: 400px; padding: 40px 30px;
             background: var(--card); border-radius: 24px;
-            border: 1px solid rgba(255,255,255,0.05); text-align: left;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.05);
         }
-        #disguise-screen h3 { font-weight: 500; letter-spacing: -0.5px; margin-bottom: 20px; color: #a1a1aa; }
+        #disguise-screen h3 { color: #a1a1aa; font-weight: 500; margin-bottom: 20px; }
         #disguise-screen p { color: var(--text-dim); font-size: 0.9rem; line-height: 1.6; }
         .secret-trigger-word { color: var(--text-dim); cursor: default; }
 
-        /* BOTÕES ESTILO SISTEMA */
         .fake-btn {
             margin-top: 25px; width: 100%; padding: 12px;
-            background: #27272a; color: #a1a1aa; border: 1px solid #3f3f46;
-            border-radius: 12px; font-size: 0.85rem; cursor: pointer; transition: 0.2s;
+            background: #1a1a1e; color: #52525b; border: 1px solid #27272a;
+            border-radius: 12px; font-size: 0.85rem; cursor: pointer;
         }
 
-        /* --- TELA 2: CORAÇÃO --- */
+        /* TELA 2: CORAÇÃO */
         .container { 
             display: none; width: 92%; max-width: 420px; 
             background: var(--card); padding: 40px 25px; border-radius: 32px;
-            border: 1px solid rgba(255,255,255,0.1); text-align: center;
-            backdrop-filter: blur(10px); animation: fadeIn 0.6s ease-out;
+            text-align: center; backdrop-filter: blur(10px); animation: fadeIn 0.6s;
         }
-
-        h1.title-main { font-size: 1.1rem; letter-spacing: 10px; font-weight: 200; color: var(--primary); margin: 0; }
-        .heart-wrapper { position: relative; margin: 40px 0; display: inline-block; cursor: pointer; }
         .heart-icon {
-            font-size: 5rem; display: block;
+            font-size: 5rem; display: block; margin: 40px 0;
             background: linear-gradient(135deg, #bb86fc 0%, #7c3aed 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 10px 20px rgba(124, 58, 237, 0.3));
             animation: breathe 2.5s infinite ease-in-out;
         }
 
-        /* --- TELA 3: DIÁRIO --- */
+        /* TELA 3: DIÁRIO */
         #diary-content { display: none; }
         textarea { 
-            width: 100%; height: 120px; padding: 20px; background: #1a1a1e;
-            border: 1px solid #27272a; border-radius: 20px; color: #fff;
-            font-size: 1rem; outline: none; margin-bottom: 15px;
+            width: 100%; height: 120px; padding: 15px; background: #16161a;
+            border: 1px solid #27272a; border-radius: 15px; color: #fff; outline: none;
         }
         .main-btn { 
-            background: linear-gradient(135deg, #bb86fc 0%, #7c3aed 100%);
-            color: #fff; border: none; padding: 18px; border-radius: 18px; 
-            width: 100%; font-weight: 600; cursor: pointer;
+            background: linear-gradient(135deg, #bb86fc, #7c3aed);
+            color: #fff; border: none; padding: 15px; border-radius: 15px; 
+            width: 100%; font-weight: 600; margin-top: 15px; cursor: pointer;
         }
 
-        @keyframes breathe { 0%, 100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.08); filter: brightness(1.2); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        #entries-container { margin-top: 25px; max-height: 40vh; overflow-y: auto; }
+        .entry { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 15px; margin-bottom: 12px; text-align: left; position: relative; }
+        .entry-date { font-size: 0.65rem; color: var(--primary); font-weight: bold; margin-bottom: 5px; }
+        .entry img { width: 100%; border-radius: 10px; margin-top: 10px; }
+        .btn-delete { position: absolute; top: 10px; right: 10px; background: none; color: #3f3f46; border: none; cursor: pointer; }
 
-        #entries-container { margin-top: 30px; max-height: 40vh; overflow-y: auto; }
-        .entry { background: rgba(255,255,255,0.03); border-radius: 22px; padding: 20px; margin-bottom: 15px; text-align: left; position: relative; border: 1px solid rgba(255,255,255,0.05); }
-        .entry-date { font-size: 0.7rem; color: var(--primary); font-weight: 600; }
-        .entry-comment { color: #d4d4d8; font-size: 0.95rem; }
-        .entry img { width: 100%; border-radius: 16px; margin-top: 15px; }
-        .btn-delete { position: absolute; top: 15px; right: 15px; background: none; color: #3f3f46; border: none; }
-        .lock-btn { margin-top: 25px; background: none; border: none; color: #3f3f46; font-size: 0.8rem; cursor: pointer; }
+        @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div id="disguise-screen">
-    <h3>Política de Dados e Privacidade</h3>
+    <h3>Privacidade e Segurança</h3>
     <p>
-        O sistema garante que todas as informações processadas permaneçam sob criptografia de alto nível. 
-        Ao interagir com este nó, você confirma que seus 
-        <span class="secret-trigger-word" onclick="showHeartScreen()">sentimentos</span> 
-        estão alinhados com os protocolos centrais do ambiente <b>L.P.</b> para a validação de logs.
+        O protocolo de criptografia assegura que o tráfego de dados seja mantido em sigilo absoluto. 
+        Ao aceitar, você confirma que os 
+        <span class="secret-trigger-word" onclick="unlockStep1()">sentimentos</span> 
+        e logs processados pertencem ao ambiente <b>L.P.</b>
         <br><br>
-        <small>Versão do Sistema: 4.6.9.1 estável</small>
+        <small>ID da Sessão: 4.6.9.1-root</small>
     </p>
-    <button class="fake-btn" onclick="alert('Erro de Sincronização: Aguardando handshake do servidor...')">Acessar Banco de Dados</button>
+    <button class="fake-btn" onclick="alert('Erro 403: Autenticação Biométrica Necessária.')">Acessar Banco de Dados</button>
 </div>
 
 <div class="container" id="main-app">
     <div id="home-screen">
-        <h1 class="title-main">LARIÊ...</h1>
-        <div class="heart-wrapper" id="secret-trigger">
-            <span class="heart-icon">💜</span>
-        </div>
-        <p style="color: var(--text-dim); font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 20px;">APENAS ACESSO SEGURO</p>
-        
-        <button class="fake-btn" style="color: var(--primary); border-color: rgba(187, 134, 252, 0.2);" onclick="alert('Validação Pendente!')">Confirmar Acesso</button>
+        <h1 style="letter-spacing: 8px; font-weight: 200; color: var(--primary); font-size: 1.2rem;">LARIÊ...</h1>
+        <div id="secret-trigger" style="cursor: pointer;"><span class="heart-icon">💜</span></div>
+        <p style="color: var(--text-dim); font-size: 0.7rem; letter-spacing: 2px;">IDENTIDADE REQUERIDA</p>
+        <button class="fake-btn" style="border-color: #3b2a54;" onclick="alert('Mantenha o sensor pressionado para validar.')">Confirmar Acesso</button>
     </div>
 
     <div id="diary-content">
-        <h2 style="font-weight: 300; color: var(--primary);">Registros</h2>
-        <textarea id="comment" placeholder="Escreva algo para ela..."></textarea>
-        <div style="margin-bottom: 15px; text-align: left;">
-            <input type="file" id="imageInput" accept="image/*" style="color: #3f3f46; font-size: 0.8rem;">
-        </div>
-        <button class="main-btn" onclick="saveEntry()">Salvar na Nuvem</button>
+        <h2 style="color: var(--primary); font-weight: 300;">Memórias</h2>
+        <textarea id="comment" placeholder="Escreva para ela..."></textarea>
+        <input type="file" id="imageInput" accept="image/*" style="margin: 15px 0; font-size: 0.7rem; color: #555;">
+        <button class="main-btn" onclick="saveEntry()">Sincronizar</button>
         <div id="entries-container"></div>
-        <button class="lock-btn" onclick="location.reload()">ENCERRAR SESSÃO</button>
+        <button onclick="location.reload()" style="background:none; border:none; color:#333; margin-top:20px; font-size:0.7rem;">LOGOUT</button>
     </div>
 </div>
 
 <script>
-    function showHeartScreen() {
-        document.getElementById('disguise-screen').style.display = 'none';
-        document.getElementById('main-app').style.display = 'block';
-    }
-
-    const trigger = document.getElementById('secret-trigger');
-    let timer;
-
-    const startAction = (e) => {
-        if (e.type === 'touchstart') e.preventDefault();
-        timer = setTimeout(askPassword, 2500);
-    };
-    const endAction = () => clearTimeout(timer);
-
-    trigger.addEventListener('touchstart', startAction);
-    trigger.addEventListener('touchend', endAction);
-    trigger.addEventListener('mousedown', startAction);
-    trigger.addEventListener('mouseup', endAction);
-
-    function askPassword() {
-        const senha = prompt("Confirmação de Identidade:");
-        if (senha === "4691") {
-            document.getElementById('home-screen').style.display = 'none';
-            document.getElementById('diary-content').style.display = 'block';
-            loadEntries();
-        } else if (senha !== null) {
-            alert("Acesso não autorizado.");
-        }
-    }
-
-    // FIREBASE
+    // Configurações do Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyAiwLZG2g_3S7pLkdXQtYqz14rTgd1FPOg",
         authDomain: "meudiario-59cba.firebaseapp.com",
@@ -172,48 +125,73 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const auth = firebase.auth();
+
+    // Autenticação Silenciosa para Segurança do Banco
+    auth.signInAnonymously().catch(e => console.error("Falha na trava de segurança"));
+
+    function unlockStep1() {
+        document.getElementById('disguise-screen').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block';
+    }
+
+    const trigger = document.getElementById('secret-trigger');
+    let timer;
+
+    // Tempo segurando: 1500ms (1.5s)
+    const startAction = (e) => { e.preventDefault(); timer = setTimeout(askPassword, 1500); };
+    const endAction = () => clearTimeout(timer);
+
+    trigger.addEventListener('touchstart', startAction);
+    trigger.addEventListener('touchend', endAction);
+    trigger.addEventListener('mousedown', startAction);
+    trigger.addEventListener('mouseup', endAction);
+
+    function askPassword() {
+        const p = prompt("Chave de Segurança:");
+        if (p === "4691") {
+            document.getElementById('home-screen').style.display = 'none';
+            document.getElementById('diary-content').style.display = 'block';
+            loadEntries();
+        }
+    }
 
     function saveEntry() {
         const comment = document.getElementById('comment').value;
         const file = document.getElementById('imageInput').files[0];
         const date = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+        
         if (!comment && !file) return;
-
         const btn = document.querySelector('.main-btn');
-        btn.innerText = "Sincronizando...";
-        btn.disabled = true;
+        btn.disabled = true; btn.innerText = "...";
+
+        const pushData = (imgBase64 = "") => {
+            db.ref('entries').push({ date, comment, image: imgBase64 }).then(() => {
+                btn.disabled = false; btn.innerText = "Sincronizar";
+                document.getElementById('comment').value = '';
+                document.getElementById('imageInput').value = '';
+            });
+        };
 
         if (file) {
             const reader = new FileReader();
-            reader.onload = (e) => pushToFirebase({ date, comment, image: e.target.result });
+            reader.onload = (e) => pushData(e.target.result);
             reader.readAsDataURL(file);
-        } else {
-            pushToFirebase({ date, comment, image: "" });
-        }
-    }
-
-    function pushToFirebase(data) {
-        db.ref('entries').push(data).then(() => {
-            const btn = document.querySelector('.main-btn');
-            btn.innerText = "Salvar na Nuvem";
-            btn.disabled = false;
-            document.getElementById('comment').value = '';
-            document.getElementById('imageInput').value = '';
-        });
+        } else { pushData(); }
     }
 
     function loadEntries() {
-        db.ref('entries').on('value', (snapshot) => {
+        db.ref('entries').on('value', (s) => {
             const container = document.getElementById('entries-container');
             container.innerHTML = '';
-            const data = snapshot.val();
+            const data = s.val();
             if (data) {
-                Object.keys(data).reverse().forEach(key => {
-                    const item = data[key];
+                Object.keys(data).reverse().forEach(k => {
+                    const item = data[k];
                     container.innerHTML += `<div class="entry">
-                        <button class="btn-delete" onclick="deleteEntry('${key}')">✕</button>
+                        <button class="btn-delete" onclick="deleteEntry('${k}')">✕</button>
                         <div class="entry-date">${item.date}</div>
-                        <div class="entry-comment">${item.comment}</div>
+                        <div style="font-size:0.9rem">${item.comment}</div>
                         ${item.image ? `<img src="${item.image}">` : ''}
                     </div>`;
                 });
@@ -221,11 +199,7 @@
         });
     }
 
-    function deleteEntry(id) {
-        if(confirm("Remover este registro?")) {
-            db.ref('entries/' + id).remove();
-        }
-    }
+    function deleteEntry(id) { if(confirm("Remover?")) db.ref('entries/'+id).remove(); }
 </script>
 </body>
 </html>
