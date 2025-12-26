@@ -44,7 +44,7 @@
             border-radius: 12px; font-size: 0.85rem; cursor: pointer;
         }
 
-        /* TELA 2: CORAÇÃO */
+        /* TELA 2: LOGIN DO CORAÇÃO */
         .container { 
             display: none; width: 92%; max-width: 450px; 
             text-align: center; animation: fadeIn 0.6s;
@@ -59,27 +59,34 @@
             animation: breathe 2.5s infinite ease-in-out;
         }
 
-        /* TELA 3: DIÁRIO (FEED) */
+        /* TELA 3: FEED SOCIAL */
         #diary-content { display: none; width: 100%; }
         
         .feed-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; padding: 0 10px;
+            display: flex; flex-direction: column; gap: 15px;
+            margin-bottom: 25px; padding: 0 10px;
         }
 
-        /* BOTÃO ADICIONAR REGISTRO */
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
+
+        .exit-btn {
+            background: none; border: none; color: #3f3f46; 
+            font-size: 0.65rem; letter-spacing: 2px; cursor: pointer;
+            text-transform: uppercase; padding: 5px;
+        }
+
         .add-record-btn {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white; border: none; padding: 12px 20px; border-radius: 50px;
+            color: white; border: none; padding: 14px; border-radius: 15px;
             font-weight: 600; font-size: 0.9rem; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
-            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+            width: 100%;
         }
 
-        /* FORMULÁRIO SOBREPOSTO (MODAL) */
+        /* FORMULÁRIO (MODAL) */
         #composer {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
             z-index: 100; justify-content: center; align-items: center;
         }
         .composer-card {
@@ -99,21 +106,20 @@
             width: 100%; font-weight: 600; margin-top: 15px; cursor: pointer;
         }
 
-        /* ESTILO DOS CARDS DO FEED */
-        #entries-container { width: 100%; padding-bottom: 100px; }
+        /* FEED CARDS */
+        #entries-container { width: 100%; padding-bottom: 50px; }
         .entry { 
             background: var(--card); padding: 20px; border-radius: 22px; 
             margin-bottom: 15px; text-align: left; position: relative; 
             border: 1px solid rgba(255,255,255,0.05);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
-        .entry-date { font-size: 0.7rem; color: var(--primary); font-weight: bold; margin-bottom: 10px; opacity: 0.8; }
+        .entry-date { font-size: 0.7rem; color: var(--primary); font-weight: bold; margin-bottom: 8px; opacity: 0.7; }
         .entry-text { font-size: 1rem; line-height: 1.5; color: #e4e4e7; }
         .entry img { width: 100%; border-radius: 14px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.1); }
-        .btn-delete { position: absolute; top: 18px; right: 18px; background: none; color: #3f3f46; border: none; font-size: 1.1rem; }
+        .btn-delete { position: absolute; top: 18px; right: 18px; background: none; color: #3f3f46; border: none; font-size: 1rem; }
 
         @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -122,13 +128,13 @@
     <h3>Privacidade e Segurança</h3>
     <p>
         A integridade deste nó de rede é protegida por camadas de criptografia ponta-a-ponta. 
-        Ao prosseguir, você valida que os 
+        Ao prosseguir, você confirma que os 
         <span class="secret-trigger-word" onclick="unlockStep1()">sentimentos</span> 
         e registros aqui contidos são fragmentos vitais da arquitetura <b>L.P.</b>
         <br><br>
         <small style="opacity: 0.5; font-family: monospace;">[STATUS: ENCRIPTADO] <br>Sessão: 4.6.9.1-root</small>
     </p>
-    <button class="fake-btn" onclick="alert('Erro 403: Autenticação Biométrica Necessária.')">Acessar Banco de Dados</button>
+    <button class="fake-btn" onclick="alert('Erro: Autenticação Requerida.')">Acessar Banco de Dados</button>
 </div>
 
 <div class="container" id="main-app">
@@ -136,31 +142,30 @@
         <h1 style="letter-spacing: 8px; font-weight: 200; color: var(--primary); font-size: 1.2rem;">LARIÊ...</h1>
         <div id="secret-trigger" style="cursor: pointer;"><span class="heart-icon">💜</span></div>
         <p style="color: var(--text-dim); font-size: 0.7rem; letter-spacing: 2px;">IDENTIDADE REQUERIDA</p>
-        <button class="fake-btn" style="border-color: #3b2a54;" onclick="alert('Acesso inválido!')">Confirmar Acesso</button>
     </div>
 
     <div id="diary-content">
         <div class="feed-header">
-            <h2 style="color: var(--primary); font-weight: 300; margin: 0;">Onde a Larissa Estiver</h2>
+            <div class="header-top">
+                <h2 style="color: var(--primary); font-weight: 300; margin: 0; font-size: 1.1rem;">Onde a Larissa Estiver</h2>
+                <button class="exit-btn" onclick="location.reload()">Sair</button>
+            </div>
             <button class="add-record-btn" onclick="toggleComposer(true)">+ Novo Registro</button>
         </div>
 
         <div id="entries-container"></div>
-        
-        <button onclick="location.reload()" style="background:none; border:none; color:#3f3f46; margin-top:20px; font-size:0.7rem; letter-spacing: 2px;">ENCERRAR CONEXÃO</button>
     </div>
 </div>
 
 <div id="composer" onclick="if(event.target==this) toggleComposer(false)">
     <div class="composer-card">
-        <h3 style="margin-top: 0; font-weight: 400;">O que está pensando?</h3>
-        <textarea id="comment" placeholder="Escreva algo especial..."></textarea>
+        <h3 style="margin-top: 0; font-weight: 400; font-size: 1rem;">Novo Registro</h3>
+        <textarea id="comment" placeholder="Escreva algo para ela..."></textarea>
         <div style="margin-top: 15px; text-align: left;">
-            <label style="font-size: 0.8rem; color: var(--text-dim);">Anexar imagem:</label><br>
-            <input type="file" id="imageInput" accept="image/*" style="margin-top: 8px; font-size: 0.8rem; color: #71717a;">
+            <input type="file" id="imageInput" accept="image/*" style="font-size: 0.7rem; color: #71717a;">
         </div>
         <button class="main-btn" onclick="saveEntry()">Publicar</button>
-        <button onclick="toggleComposer(false)" style="background:none; border:none; color:#71717a; width:100%; margin-top:10px; cursor:pointer;">Cancelar</button>
+        <button onclick="toggleComposer(false)" style="background:none; border:none; color:#52525b; width:100%; margin-top:12px; cursor:pointer; font-size: 0.8rem;">Cancelar</button>
     </div>
 </div>
 
@@ -177,15 +182,13 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const auth = firebase.auth();
-    auth.signInAnonymously().catch(e => console.error("Falha na trava"));
+    firebase.auth().signInAnonymously();
 
     function unlockStep1() {
         document.getElementById('disguise-screen').style.display = 'none';
         document.getElementById('main-app').style.display = 'block';
     }
 
-    // GATILHO SENHA
     const trigger = document.getElementById('secret-trigger');
     let timer;
     const startAction = (e) => { e.preventDefault(); timer = setTimeout(askPassword, 1500); };
@@ -215,7 +218,7 @@
         
         if (!comment && !file) return;
         const btn = document.querySelector('#composer .main-btn');
-        btn.disabled = true; btn.innerText = "Publicando...";
+        btn.disabled = true; btn.innerText = "Sincronizando...";
 
         const pushData = (imgBase64 = "") => {
             db.ref('entries').push({ date, comment, image: imgBase64 }).then(() => {
@@ -252,7 +255,7 @@
         });
     }
 
-    function deleteEntry(id) { if(confirm("Apagar este registro permanentemente?")) db.ref('entries/'+id).remove(); }
+    function deleteEntry(id) { if(confirm("Apagar permanentemente?")) db.ref('entries/'+id).remove(); }
 </script>
 </body>
 </html>
