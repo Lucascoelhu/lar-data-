@@ -3,156 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>L P — Daily</title>
+    <title>Configurações de Privacidade</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     
     <style>
         :root {
-            --primary: #d1b3ff; /* Lilás suave */
-            --primary-bright: #bb86fc; /* Lilás vibrante */
-            --bg: #0f0f12; /* Preto azulado profundo */
-            --card: #1a1a1e; /* Cinza antracite */
-            --text: #f0f0f0;
-            --text-dim: #88888e;
+            --primary: #bb86fc;
+            --secondary: #9965f4;
+            --bg: #0b0b0d;
+            --card: rgba(25, 25, 28, 0.95);
+            --text: #ffffff;
+            --text-dim: #71717a;
         }
 
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 
         body { 
-            font-family: 'Segoe UI', Roboto, sans-serif; 
-            background: var(--bg); 
-            background-image: radial-gradient(rgba(209, 179, 255, 0.05) 0.5px, transparent 0.5px);
-            background-size: 30px 30px;
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            background-image: 
+                radial-gradient(circle at 50% -20%, #2a1b4d 0%, transparent 50%),
+                radial-gradient(circle at 0% 100%, #1a0f2e 0%, transparent 40%);
             display: flex; justify-content: center; align-items: center; 
             min-height: 100vh; margin: 0; color: var(--text);
-            overflow-x: hidden;
         }
 
+        /* --- TELA 1: DISFARCE --- */
+        #disguise-screen {
+            width: 90%; max-width: 400px; padding: 40px 30px;
+            background: var(--card); border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.05); text-align: left;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+        #disguise-screen h3 { font-weight: 500; letter-spacing: -0.5px; margin-bottom: 20px; color: #a1a1aa; }
+        #disguise-screen p { color: var(--text-dim); font-size: 0.9rem; line-height: 1.6; }
+        .secret-trigger-word { color: var(--text-dim); cursor: default; }
+
+        /* BOTÕES ESTILO SISTEMA */
+        .fake-btn {
+            margin-top: 25px; width: 100%; padding: 12px;
+            background: #27272a; color: #a1a1aa; border: 1px solid #3f3f46;
+            border-radius: 12px; font-size: 0.85rem; cursor: pointer; transition: 0.2s;
+        }
+
+        /* --- TELA 2: CORAÇÃO --- */
         .container { 
-            text-align: center; background: var(--card); 
-            padding: 40px 25px; border-radius: 40px; 
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); 
-            width: 92%; max-width: 450px; margin: 20px auto;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: none; width: 92%; max-width: 420px; 
+            background: var(--card); padding: 40px 25px; border-radius: 32px;
+            border: 1px solid rgba(255,255,255,0.1); text-align: center;
+            backdrop-filter: blur(10px); animation: fadeIn 0.6s ease-out;
         }
 
-        /* TELA INICIAL */
-        #home-screen h1 { 
-            color: var(--primary); font-size: 1.2rem;
-            cursor: pointer; user-select: none; 
-            margin: 0; letter-spacing: 8px; font-weight: 200;
-            transition: 0.5s;
+        h1.title-main { font-size: 1.1rem; letter-spacing: 10px; font-weight: 200; color: var(--primary); margin: 0; }
+        .heart-wrapper { position: relative; margin: 40px 0; display: inline-block; cursor: pointer; }
+        .heart-icon {
+            font-size: 5rem; display: block;
+            background: linear-gradient(135deg, #bb86fc 0%, #7c3aed 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 10px 20px rgba(124, 58, 237, 0.3));
+            animation: breathe 2.5s infinite ease-in-out;
         }
-        #home-screen .heart-icon {
-            font-size: 4rem; margin: 25px 0; display: block;
-            animation: breathe 3s infinite ease-in-out;
-            filter: drop-shadow(0 0 15px rgba(187, 134, 252, 0.4));
-        }
-        @keyframes breathe {
-            0%, 100% { transform: scale(1); opacity: 0.6; }
-            50% { transform: scale(1.1); opacity: 1; }
-        }
-        #home-screen p { color: var(--text-dim); font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase; }
 
-        /* PAINEL */
-        #diary-content { display: none; animation: slideUp 0.5s ease-out; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        .header-title { margin-bottom: 30px; }
-        .header-title h2 { color: var(--primary); font-weight: 300; font-size: 1.6rem; margin: 0; }
-        .header-title p { color: var(--text-dim); font-size: 0.8rem; margin: 5px 0; }
-
+        /* --- TELA 3: DIÁRIO --- */
+        #diary-content { display: none; }
         textarea { 
-            width: 100%; height: 130px; padding: 18px; 
-            background: #25252b; border: 1px solid #333; 
-            border-radius: 20px; color: white; font-size: 16px; 
-            outline: none; transition: 0.3s; margin-bottom: 15px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+            width: 100%; height: 120px; padding: 20px; background: #1a1a1e;
+            border: 1px solid #27272a; border-radius: 20px; color: #fff;
+            font-size: 1rem; outline: none; margin-bottom: 15px;
         }
-        textarea:focus { border-color: var(--primary-bright); background: #2a2a32; }
-
-        .file-upload { margin-bottom: 20px; text-align: left; }
-        input[type="file"] { font-size: 0.75rem; color: var(--text-dim); width: 100%; }
-
         .main-btn { 
-            background: linear-gradient(135deg, #9965f4, #6200ee);
-            color: white; border: none; padding: 18px; 
-            border-radius: 20px; cursor: pointer; width: 100%; 
-            font-weight: 600; font-size: 1rem; letter-spacing: 1px;
-            box-shadow: 0 8px 20px rgba(98, 0, 238, 0.3);
-            transition: 0.3s;
-        }
-        .main-btn:active { transform: scale(0.96); }
-
-        /* LISTA */
-        #entries-container { 
-            margin-top: 35px; max-height: 50vh; 
-            overflow-y: auto; padding-right: 10px;
-        }
-        #entries-container::-webkit-scrollbar { width: 3px; }
-        #entries-container::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
-
-        .entry { 
-            background: rgba(255, 255, 255, 0.03); border-radius: 25px;
-            margin-bottom: 20px; padding: 20px; 
-            text-align: left; position: relative; 
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .entry-date { font-size: 0.6rem; color: var(--primary-bright); margin-bottom: 8px; font-weight: bold; text-transform: uppercase; }
-        .entry-comment { font-size: 0.95rem; line-height: 1.5; color: #ccc; }
-        .entry img { width: 100%; border-radius: 18px; margin-top: 15px; border: 1px solid #333; }
-
-        .btn-delete { 
-            position: absolute; top: 15px; right: 15px; 
-            background: transparent; color: #444; border: none; font-size: 14px;
+            background: linear-gradient(135deg, #bb86fc 0%, #7c3aed 100%);
+            color: #fff; border: none; padding: 18px; border-radius: 18px; 
+            width: 100%; font-weight: 600; cursor: pointer;
         }
 
-        .lock-btn { margin-top: 30px; background: none; border: none; color: #444; font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+        @keyframes breathe { 0%, 100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.08); filter: brightness(1.2); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #entries-container { margin-top: 30px; max-height: 40vh; overflow-y: auto; }
+        .entry { background: rgba(255,255,255,0.03); border-radius: 22px; padding: 20px; margin-bottom: 15px; text-align: left; position: relative; border: 1px solid rgba(255,255,255,0.05); }
+        .entry-date { font-size: 0.7rem; color: var(--primary); font-weight: 600; }
+        .entry-comment { color: #d4d4d8; font-size: 0.95rem; }
+        .entry img { width: 100%; border-radius: 16px; margin-top: 15px; }
+        .btn-delete { position: absolute; top: 15px; right: 15px; background: none; color: #3f3f46; border: none; }
+        .lock-btn { margin-top: 25px; background: none; border: none; color: #3f3f46; font-size: 0.8rem; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div id="disguise-screen">
+    <h3>Política de Dados e Privacidade</h3>
+    <p>
+        O sistema garante que todas as informações processadas permaneçam sob criptografia de alto nível. 
+        Ao interagir com este nó, você confirma que seus 
+        <span class="secret-trigger-word" onclick="showHeartScreen()">sentimentos</span> 
+        estão alinhados com os protocolos centrais do ambiente <b>L.P.</b> para a validação de logs.
+        <br><br>
+        <small>Versão do Sistema: 4.6.9.1 estável</small>
+    </p>
+    <button class="fake-btn" onclick="alert('Erro de Sincronização: Aguardando handshake do servidor...')">Acessar Banco de Dados</button>
+</div>
+
+<div class="container" id="main-app">
     <div id="home-screen">
-        <h1>LARIÊ...</h1>
-        <span class="heart-icon" id="secret-trigger">💜</span>
-        <p>Acesso ao Diário</p>
+        <h1 class="title-main">LARIÊ...</h1>
+        <div class="heart-wrapper" id="secret-trigger">
+            <span class="heart-icon">💜</span>
+        </div>
+        <p style="color: var(--text-dim); font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 20px;">APENAS ACESSO SEGURO</p>
+        
+        <button class="fake-btn" style="color: var(--primary); border-color: rgba(187, 134, 252, 0.2);" onclick="alert('Validação Pendente!')">Confirmar Acesso</button>
     </div>
 
     <div id="diary-content">
-        <div class="header-title">
-            <h2>Sentimentos</h2>
-            <p>Memórias registradas para ela</p>
+        <h2 style="font-weight: 300; color: var(--primary);">Registros</h2>
+        <textarea id="comment" placeholder="Escreva algo para ela..."></textarea>
+        <div style="margin-bottom: 15px; text-align: left;">
+            <input type="file" id="imageInput" accept="image/*" style="color: #3f3f46; font-size: 0.8rem;">
         </div>
-        
-        <textarea id="comment" placeholder="Como você se sente hoje?"></textarea>
-        
-        <div class="file-upload">
-            <input type="file" id="imageInput" accept="image/*">
-        </div>
-        
-        <button class="main-btn" onclick="saveEntry()">Registrar Sentimento</button>
-        
+        <button class="main-btn" onclick="saveEntry()">Salvar na Nuvem</button>
         <div id="entries-container"></div>
-        
-        <button class="lock-btn" onclick="location.reload()">Criptografar e Sair</button>
+        <button class="lock-btn" onclick="location.reload()">ENCERRAR SESSÃO</button>
     </div>
 </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyAiwLZG2g_3S7pLkdXQtYqz14rTgd1FPOg",
-        authDomain: "meudiario-59cba.firebaseapp.com",
-        databaseURL: "https://meudiario-59cba-default-rtdb.firebaseio.com", 
-        projectId: "meudiario-59cba",
-        storageBucket: "meudiario-59cba.firebasestorage.app",
-        messagingSenderId: "426502564208",
-        appId: "1:426502564208:web:07839ac5ffd480f95547b5"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    function showHeartScreen() {
+        document.getElementById('disguise-screen').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block';
+    }
 
     const trigger = document.getElementById('secret-trigger');
     let timer;
@@ -169,21 +149,34 @@
     trigger.addEventListener('mouseup', endAction);
 
     function askPassword() {
-        const senha = prompt("Assinatura digital (Senha):");
+        const senha = prompt("Confirmação de Identidade:");
         if (senha === "4691") {
             document.getElementById('home-screen').style.display = 'none';
             document.getElementById('diary-content').style.display = 'block';
             loadEntries();
         } else if (senha !== null) {
-            alert("❌ Acesso bloqueado. Chave incorreta.");
+            alert("Acesso não autorizado.");
         }
     }
+
+    // FIREBASE
+    const firebaseConfig = {
+        apiKey: "AIzaSyAiwLZG2g_3S7pLkdXQtYqz14rTgd1FPOg",
+        authDomain: "meudiario-59cba.firebaseapp.com",
+        databaseURL: "https://meudiario-59cba-default-rtdb.firebaseio.com", 
+        projectId: "meudiario-59cba",
+        storageBucket: "meudiario-59cba.firebasestorage.app",
+        messagingSenderId: "426502564208",
+        appId: "1:426502564208:web:07839ac5ffd480f95547b5"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
     function saveEntry() {
         const comment = document.getElementById('comment').value;
         const file = document.getElementById('imageInput').files[0];
         const date = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-
         if (!comment && !file) return;
 
         const btn = document.querySelector('.main-btn');
@@ -201,8 +194,9 @@
 
     function pushToFirebase(data) {
         db.ref('entries').push(data).then(() => {
-            document.querySelector('.main-btn').innerText = "Registrar Sentimento";
-            document.querySelector('.main-btn').disabled = false;
+            const btn = document.querySelector('.main-btn');
+            btn.innerText = "Salvar na Nuvem";
+            btn.disabled = false;
             document.getElementById('comment').value = '';
             document.getElementById('imageInput').value = '';
         });
@@ -216,21 +210,19 @@
             if (data) {
                 Object.keys(data).reverse().forEach(key => {
                     const item = data[key];
-                    container.innerHTML += `
-                        <div class="entry">
-                            <button class="btn-delete" onclick="deleteEntry('${key}')">✕</button>
-                            <div class="entry-date">${item.date}</div>
-                            <div class="entry-comment">${item.comment}</div>
-                            ${item.image ? `<img src="${item.image}">` : ''}
-                        </div>
-                    `;
+                    container.innerHTML += `<div class="entry">
+                        <button class="btn-delete" onclick="deleteEntry('${key}')">✕</button>
+                        <div class="entry-date">${item.date}</div>
+                        <div class="entry-comment">${item.comment}</div>
+                        ${item.image ? `<img src="${item.image}">` : ''}
+                    </div>`;
                 });
             }
         });
     }
 
     function deleteEntry(id) {
-        if(confirm("Deseja remover este registro dos sentimentos?")) {
+        if(confirm("Remover este registro?")) {
             db.ref('entries/' + id).remove();
         }
     }
