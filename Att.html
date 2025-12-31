@@ -85,7 +85,6 @@
             border-radius: 12px;
             font-size: 0.8rem;
             margin-bottom: 10px;
-            transition: 0.3s;
             cursor: pointer;
         }
 
@@ -97,7 +96,7 @@
             width: 100%;
         }
 
-        /* FORMULÁRIO */
+        /* COMPOSER */
         #composer {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
@@ -109,7 +108,7 @@
         }
 
         textarea { 
-            width: 100%; height: 150px; padding: 15px; background: #0b0b0d;
+            width: 100%; height: 120px; padding: 15px; background: #0b0b0d;
             border: 1px solid #27272a; border-radius: 15px; color: #fff; 
             outline: none; resize: none; font-size: 1rem;
         }
@@ -120,17 +119,17 @@
             width: 100%; font-weight: 600; margin-top: 15px; cursor: pointer;
         }
 
-        /* FEED CARDS */
+        /* FEED */
         #entries-container { width: 100%; padding-bottom: 50px; }
         .entry { 
             background: var(--card); padding: 20px; border-radius: 22px; 
             margin-bottom: 15px; text-align: left; position: relative; 
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.05); animation: fadeIn 0.4s;
         }
         .entry-date { font-size: 0.7rem; color: var(--primary); font-weight: bold; margin-bottom: 8px; opacity: 0.7; }
         .entry-text { font-size: 1rem; line-height: 1.5; color: #e4e4e7; }
         .entry img { width: 100%; border-radius: 14px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.1); }
-        .btn-delete { position: absolute; top: 18px; right: 18px; background: none; color: #3f3f46; border: none; font-size: 1rem; }
+        .btn-delete { position: absolute; top: 18px; right: 18px; background: none; color: #3f3f46; border: none; font-size: 1rem; cursor: pointer; }
 
         @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
@@ -164,27 +163,23 @@
                 <h2 style="color: var(--primary); font-weight: 300; margin: 0; font-size: 2.1rem;">PARA ELA... <3</h2>
                 <button class="exit-btn" onclick="location.reload()">Sair</button>
             </div>
-            
             <div style="text-align: left;">
                 <a id="btnCarta" href="larissa.html" class="btn-link-especial">✨ Abrir carta especial</a>
             </div>
-            
             <button class="add-record-btn" onclick="toggleComposer(true)">+ Novo Registro</button>
         </div>
-
-        <div id="entries-container"></div>
+        <div id="entries-container">Carregando momentos...</div>
     </div>
 </div>
 
 <div id="composer" onclick="if(event.target==this) toggleComposer(false)">
     <div class="composer-card">
-        <h3 style="margin-top: 0; font-weight: 400; font-size: 1rem;">Novo Registro</h3>
-        <textarea id="comment" placeholder="Escreva algo para ela..."></textarea>
+        <h3 style="margin-top: 0; font-weight: 400;">Novo Registro</h3>
+        <textarea id="comment" placeholder="Escreva algo..."></textarea>
         <div style="margin-top: 15px; text-align: left;">
             <input type="file" id="imageInput" accept="image/*" style="font-size: 0.7rem; color: #71717a;">
         </div>
         <button class="main-btn" onclick="saveEntry()">Publicar</button>
-        <button onclick="toggleComposer(false)" style="background:none; border:none; color:#52525b; width:100%; margin-top:12px; cursor:pointer; font-size: 0.8rem;">Cancelar</button>
     </div>
 </div>
 
@@ -203,111 +198,106 @@
     const db = firebase.database();
     firebase.auth().signInAnonymously();
 
-    let viewRegistered = false;
+    let isAdmin = localStorage.getItem('modoAdmin') === 'true';
 
     function unlockStep1() {
         document.getElementById('disguise-screen').style.display = 'none';
         document.getElementById('main-app').style.display = 'block';
-        
-        if (!viewRegistered) {
+        if (!isAdmin) {
             const agora = new Date().toLocaleString('pt-BR');
-            db.ref('monitoramento/visitas').push({
-                data: agora,
-                tipo: "Acesso à tela do Coração"
-            });
-            viewRegistered = true;
+            db.ref('monitoramento/visitas').push({ data: agora });
         }
     }
 
+    // Clique longo Coração
     const trigger = document.getElementById('secret-trigger');
     let timer;
-    const startAction = (e) => { e.preventDefault(); timer = setTimeout(askPassword, 1500); };
-    const endAction = () => clearTimeout(timer);
-    trigger.addEventListener('touchstart', startAction);
-    trigger.addEventListener('touchend', endAction);
-    trigger.addEventListener('mousedown', startAction);
-    trigger.addEventListener('mouseup', endAction);
+    trigger.addEventListener('mousedown', () => timer = setTimeout(askPassword, 1500));
+    trigger.addEventListener('touchstart', (e) => { e.preventDefault(); timer = setTimeout(askPassword, 1500); });
+    trigger.addEventListener('mouseup', () => clearTimeout(timer));
+    trigger.addEventListener('touchend', () => clearTimeout(timer));
 
     function askPassword() {
-        const p = prompt("Chave de Segurança:");
-        if (p === "4691") {
+        if (prompt("Chave de Segurança:") === "4691") {
             document.getElementById('home-screen').style.display = 'none';
             document.getElementById('diary-content').style.display = 'block';
             loadEntries();
         }
     }
 
-    // --- SISTEMA DE 6 CLIQUES NO BOTÃO "CARTA ESPECIAL" ---
+    // 6 Cliques Admin
     let adminClicks = 0;
-    const btnCarta = document.getElementById('btnCarta');
-
-    btnCarta.addEventListener('click', (e) => {
+    document.getElementById('btnCarta').addEventListener('click', (e) => {
         adminClicks++;
-        
         if (adminClicks === 6) {
-            e.preventDefault(); // Impede de abrir a página se for o 6º clique rápido
-            db.ref('monitoramento/visitas').once('value', (snapshot) => {
-                const total = snapshot.numChildren();
-                let ultima = "Nenhuma";
-                snapshot.forEach(child => { ultima = child.val().data; });
-                alert(`📊 RELATÓRIO DISCRETO:\n\nTotal de aberturas: ${total}\nÚltima em: ${ultima}`);
+            e.preventDefault();
+            localStorage.setItem('modoAdmin', 'true'); isAdmin = true;
+            db.ref('monitoramento/visitas').once('value', s => {
+                alert(`👑 MODO ADMIN: ON\nTotal dela: ${s.numChildren()}`);
             });
             adminClicks = 0;
         }
-
-        // Se demorar mais de 2 segundos entre cliques, o contador zera
-        setTimeout(() => { if(adminClicks < 6) adminClicks = 0; }, 2000);
+        setTimeout(() => adminClicks = 0, 2000);
     });
 
-    function toggleComposer(show) {
-        document.getElementById('composer').style.display = show ? 'flex' : 'none';
+    function toggleComposer(show) { document.getElementById('composer').style.display = show ? 'flex' : 'none'; }
+
+    // COMPRESSÃO DE IMAGEM (O segredo da velocidade)
+    function compressImg(file) {
+        return new Promise(res => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = e => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const scale = 800 / img.width;
+                    canvas.width = 800; canvas.height = img.height * scale;
+                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                    res(canvas.toDataURL('image/jpeg', 0.6)); // Qualidade 60%
+                }
+            }
+        });
     }
 
-    function saveEntry() {
+    async function saveEntry() {
         const comment = document.getElementById('comment').value;
         const file = document.getElementById('imageInput').files[0];
-        const date = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-        
         if (!comment && !file) return;
-        const btn = document.querySelector('#composer .main-btn');
-        btn.disabled = true; btn.innerText = "Sincronizando...";
 
-        const pushData = (imgBase64 = "") => {
-            db.ref('entries').push({ date, comment, image: imgBase64 }).then(() => {
-                btn.disabled = false; btn.innerText = "Publicar";
-                document.getElementById('comment').value = '';
-                document.getElementById('imageInput').value = '';
-                toggleComposer(false);
-            });
-        };
+        const btn = document.querySelector('.main-btn');
+        btn.disabled = true; btn.innerText = "Comprimindo...";
 
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => pushData(e.target.result);
-            reader.readAsDataURL(file);
-        } else { pushData(); }
+        let imgData = file ? await compressImg(file) : "";
+        const date = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+
+        db.ref('entries').push({ date, comment, image: imgData }).then(() => {
+            location.reload();
+        });
     }
 
     function loadEntries() {
-        db.ref('entries').on('value', (s) => {
+        db.ref('entries').limitToLast(20).once('value', s => {
             const container = document.getElementById('entries-container');
             container.innerHTML = '';
             const data = s.val();
             if (data) {
                 Object.keys(data).reverse().forEach(k => {
                     const item = data[k];
-                    container.innerHTML += `<div class="entry">
-                        <button class="btn-delete" onclick="deleteEntry('${k}')">✕</button>
-                        <div class="entry-date">${item.date}</div>
-                        <div class="entry-text">${item.comment}</div>
-                        ${item.image ? `<img src="${item.image}">` : ''}
-                    </div>`;
+                    container.innerHTML += `
+                        <div class="entry">
+                            <button class="btn-delete" onclick="deleteEntry('${k}')">✕</button>
+                            <div class="entry-date">${item.date}</div>
+                            <div class="entry-text">${item.comment}</div>
+                            ${item.image ? `<img src="${item.image}" loading="lazy">` : ''}
+                        </div>`;
                 });
-            }
+            } else { container.innerHTML = "Nenhum momento ainda."; }
         });
     }
 
-    function deleteEntry(id) { if(confirm("Apagar permanentemente?")) db.ref('entries/'+id).remove(); }
+    function deleteEntry(id) { if(confirm("Apagar?")) db.ref('entries/'+id).remove().then(() => loadEntries()); }
 </script>
 </body>
 </html>
