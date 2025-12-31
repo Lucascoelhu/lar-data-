@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -17,6 +16,7 @@
             --bg: #0b0b0d;
             --card: rgba(25, 25, 28, 0.98);
             --text-dim: #71717a;
+            --danger: #ff4444;
         }
 
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
@@ -37,7 +37,6 @@
         }
         #disguise-screen h3 { color: #a1a1aa; font-weight: 500; margin-bottom: 20px; }
         #disguise-screen p { color: var(--text-dim); font-size: 0.9rem; line-height: 1.6; }
-        .secret-trigger-word { color: var(--text-dim); cursor: default; }
 
         .fake-btn {
             margin-top: 25px; width: 100%; padding: 12px;
@@ -62,40 +61,26 @@
 
         /* TELA 3: DIÁRIO */
         #diary-content { display: none; width: 100%; }
-        
-        .feed-header {
-            display: flex; flex-direction: column; gap: 15px;
-            margin-bottom: 25px; padding: 0 10px;
-        }
-
+        .feed-header { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; padding: 0 10px; }
         .header-top { display: flex; justify-content: space-between; align-items: center; }
-
-        .exit-btn {
-            background: none; border: none; color: #3f3f46; 
-            font-size: 0.65rem; letter-spacing: 2px; cursor: pointer;
-            text-transform: uppercase; padding: 5px;
-        }
+        .exit-btn { background: none; border: none; color: #3f3f46; font-size: 0.65rem; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; padding: 5px; }
 
         .btn-link-especial {
-            display: inline-block;
-            text-decoration: none;
-            background: rgba(187, 134, 252, 0.1);
-            color: var(--primary);
-            border: 1px solid rgba(187, 134, 252, 0.3);
-            padding: 10px 15px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            margin-bottom: 10px;
-            cursor: pointer;
+            display: inline-block; text-decoration: none;
+            background: rgba(187, 134, 252, 0.1); color: var(--primary);
+            border: 1px solid rgba(187, 134, 252, 0.3); padding: 10px 15px;
+            border-radius: 12px; font-size: 0.8rem; margin-bottom: 10px;
         }
 
         .add-record-btn {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white; border: none; padding: 14px; border-radius: 15px;
-            font-weight: 600; font-size: 0.9rem; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
-            width: 100%;
+            font-weight: 600; width: 100%; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
         }
+
+        /* LIXEIRA (MODO ADMIN) */
+        #trash-section { display: none; margin-top: 40px; border-top: 1px dashed #333; padding-top: 20px; }
+        .trash-title { color: var(--danger); font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 15px; }
 
         /* COMPOSER */
         #composer {
@@ -103,25 +88,12 @@
             background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
             z-index: 100; justify-content: center; align-items: center;
         }
-        .composer-card {
-            background: #16161a; width: 90%; max-width: 400px; padding: 25px;
-            border-radius: 25px; border: 1px solid #27272a;
-        }
-
-        textarea { 
-            width: 100%; height: 120px; padding: 15px; background: #0b0b0d;
-            border: 1px solid #27272a; border-radius: 15px; color: #fff; 
-            outline: none; resize: none; font-size: 1rem;
-        }
-        
-        .main-btn { 
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: #fff; border: none; padding: 15px; border-radius: 15px; 
-            width: 100%; font-weight: 600; margin-top: 15px; cursor: pointer;
-        }
+        .composer-card { background: #16161a; width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; border: 1px solid #27272a; }
+        textarea { width: 100%; height: 120px; padding: 15px; background: #0b0b0d; border: 1px solid #27272a; border-radius: 15px; color: #fff; outline: none; resize: none; font-size: 1rem; }
+        .main-btn { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; border: none; padding: 15px; border-radius: 15px; width: 100%; font-weight: 600; margin-top: 15px; }
 
         /* FEED */
-        #entries-container { width: 100%; padding-bottom: 50px; }
+        #entries-container, #trash-container { width: 100%; }
         .entry { 
             background: var(--card); padding: 20px; border-radius: 22px; 
             margin-bottom: 15px; text-align: left; position: relative; 
@@ -131,6 +103,7 @@
         .entry-text { font-size: 1rem; line-height: 1.5; color: #e4e4e7; }
         .entry img { width: 100%; border-radius: 14px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.1); }
         .btn-delete { position: absolute; top: 18px; right: 18px; background: none; color: #3f3f46; border: none; font-size: 1rem; cursor: pointer; }
+        .btn-restore { background: #1a1a1e; color: var(--primary); border: 1px solid var(--primary); padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; margin-top: 10px; cursor: pointer; }
 
         @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
@@ -151,6 +124,7 @@
     <button class="fake-btn" onclick="alert('Erro: Autenticação Requerida.')">Acessar Banco de Dados</button>
 </div>
 
+
 <div class="container" id="main-app">
     <div id="home-screen">
         <h1 style="letter-spacing: 8px; font-weight: 200; color: var(--primary); font-size: 1.2rem;">LARIÊ...</h1>
@@ -169,7 +143,13 @@
             </div>
             <button class="add-record-btn" onclick="toggleComposer(true)">+ Novo Registro</button>
         </div>
+        
         <div id="entries-container">Carregando momentos...</div>
+
+        <div id="trash-section">
+            <div class="trash-title">🗑️ LIXEIRA (SÓ VOCÊ VÊ)</div>
+            <div id="trash-container"></div>
+        </div>
     </div>
 </div>
 
@@ -204,46 +184,105 @@
     function unlockStep1() {
         document.getElementById('disguise-screen').style.display = 'none';
         document.getElementById('main-app').style.display = 'block';
+    }
+
+    document.getElementById('btnCarta').addEventListener('click', () => {
         if (!isAdmin) {
-            const agora = new Date().toLocaleString('pt-BR');
-            db.ref('monitoramento/visitas').push({ data: agora });
+            db.ref('monitoramento/visitas').push({ data: new Date().toLocaleString('pt-BR') });
         }
-    }
-
-    // Clique longo Coração
-    const trigger = document.getElementById('secret-trigger');
-    let timer;
-    trigger.addEventListener('mousedown', () => timer = setTimeout(askPassword, 1500));
-    trigger.addEventListener('touchstart', (e) => { e.preventDefault(); timer = setTimeout(askPassword, 1500); });
-    trigger.addEventListener('mouseup', () => clearTimeout(timer));
-    trigger.addEventListener('touchend', () => clearTimeout(timer));
-
-    function askPassword() {
-        if (prompt("Chave de Segurança:") === "4691") {
-            document.getElementById('home-screen').style.display = 'none';
-            document.getElementById('diary-content').style.display = 'block';
-            loadEntries();
-        }
-    }
-
-    // 6 Cliques Admin
-    let adminClicks = 0;
-    document.getElementById('btnCarta').addEventListener('click', (e) => {
-        adminClicks++;
-        if (adminClicks === 6) {
-            e.preventDefault();
-            localStorage.setItem('modoAdmin', 'true'); isAdmin = true;
-            db.ref('monitoramento/visitas').once('value', s => {
-                alert(`👑 MODO ADMIN: ON\nTotal dela: ${s.numChildren()}`);
-            });
-            adminClicks = 0;
-        }
-        setTimeout(() => adminClicks = 0, 2000);
     });
 
-    function toggleComposer(show) { document.getElementById('composer').style.display = show ? 'flex' : 'none'; }
+    // Lógica do Coração
+    const trigger = document.getElementById('secret-trigger');
+    let startTime;
+    let adminTimer;
 
-    // COMPRESSÃO DE IMAGEM (O segredo da velocidade)
+    trigger.addEventListener('mousedown', handleStart);
+    trigger.addEventListener('touchstart', (e) => { e.preventDefault(); handleStart(); });
+    trigger.addEventListener('mouseup', handleEnd);
+    trigger.addEventListener('touchend', handleEnd);
+
+    function handleStart() {
+        startTime = Date.now();
+        adminTimer = setTimeout(() => {
+            // Se segurar 7 segundos: mostra contagem + ativa visualização da lixeira
+            db.ref('monitoramento/visitas').once('value', s => {
+                alert(`📊 Cliques na carta: ${s.numChildren()}`);
+                document.getElementById('trash-section').style.display = 'block';
+                loadTrash();
+            });
+        }, 7000);
+    }
+
+    function handleEnd() {
+        const duration = Date.now() - startTime;
+        clearTimeout(adminTimer);
+        if (duration >= 1500 && duration < 7000) {
+            if (prompt("Chave de Segurança:") === "4691") {
+                document.getElementById('home-screen').style.display = 'none';
+                document.getElementById('diary-content').style.display = 'block';
+                loadEntries();
+            }
+        }
+    }
+
+    // Lógica da Lixeira
+    function deleteEntry(id) {
+        if(confirm("Mover para a lixeira?")) {
+            db.ref('entries/' + id).once('value', s => {
+                const data = s.val();
+                db.ref('trash/' + id).set(data).then(() => {
+                    db.ref('entries/' + id).remove().then(() => loadEntries());
+                });
+            });
+        }
+    }
+
+    function loadTrash() {
+        db.ref('trash').once('value', s => {
+            const container = document.getElementById('trash-container');
+            container.innerHTML = '';
+            const data = s.val();
+            if (data) {
+                Object.keys(data).forEach(k => {
+                    const item = data[k];
+                    container.innerHTML += `
+                        <div class="entry" style="opacity: 0.6">
+                            <div class="entry-date">${item.date} (APAGADO)</div>
+                            <div class="entry-text">${item.comment}</div>
+                            <button class="btn-restore" onclick="restoreEntry('${k}')">🔄 Restaurar</button>
+                        </div>`;
+                });
+            } else { container.innerHTML = "<p style='font-size:0.7rem'>Lixeira vazia.</p>"; }
+        });
+    }
+
+    function restoreEntry(id) {
+        db.ref('trash/' + id).once('value', s => {
+            const data = s.val();
+            db.ref('entries/' + id).set(data).then(() => {
+                db.ref('trash/' + id).remove().then(() => {
+                    loadEntries();
+                    loadTrash();
+                });
+            });
+        });
+    }
+
+    // Funções Padrão
+    function toggleComposer(show) { document.getElementById('composer').style.display = show ? 'flex' : 'none'; }
+    
+    async function saveEntry() {
+        const comment = document.getElementById('comment').value;
+        const file = document.getElementById('imageInput').files[0];
+        if (!comment && !file) return;
+        const btn = document.querySelector('.main-btn');
+        btn.disabled = true; btn.innerText = "Salvando...";
+        let imgData = file ? await compressImg(file) : "";
+        const date = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+        db.ref('entries').push({ date, comment, image: imgData }).then(() => location.reload());
+    }
+
     function compressImg(file) {
         return new Promise(res => {
             const reader = new FileReader();
@@ -256,25 +295,9 @@
                     const scale = 800 / img.width;
                     canvas.width = 800; canvas.height = img.height * scale;
                     canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                    res(canvas.toDataURL('image/jpeg', 0.6)); // Qualidade 60%
+                    res(canvas.toDataURL('image/jpeg', 0.6));
                 }
             }
-        });
-    }
-
-    async function saveEntry() {
-        const comment = document.getElementById('comment').value;
-        const file = document.getElementById('imageInput').files[0];
-        if (!comment && !file) return;
-
-        const btn = document.querySelector('.main-btn');
-        btn.disabled = true; btn.innerText = "Comprimindo...";
-
-        let imgData = file ? await compressImg(file) : "";
-        const date = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-
-        db.ref('entries').push({ date, comment, image: imgData }).then(() => {
-            location.reload();
         });
     }
 
@@ -291,14 +314,12 @@
                             <button class="btn-delete" onclick="deleteEntry('${k}')">✕</button>
                             <div class="entry-date">${item.date}</div>
                             <div class="entry-text">${item.comment}</div>
-                            ${item.image ? `<img src="${item.image}" loading="lazy">` : ''}
+                            ${item.image ? `<img src="${item.image}">` : ''}
                         </div>`;
                 });
             } else { container.innerHTML = "Nenhum momento ainda."; }
         });
     }
-
-    function deleteEntry(id) { if(confirm("Apagar?")) db.ref('entries/'+id).remove().then(() => loadEntries()); }
 </script>
 </body>
 </html>
