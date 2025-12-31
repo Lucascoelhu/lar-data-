@@ -113,17 +113,9 @@
 
 <div id="disguise-screen">
     <h3>Privacidade e Segurança</h3>
-    <p>
-        A integridade deste nó de rede é protegida por camadas de criptografia ponta-a-ponta. 
-        Ao prosseguir, você confirma que os 
-        <span class="secret-trigger-word" onclick="unlockStep1()">sentimentos</span> 
-        e registros aqui contidos são fragmentos vitais da arquitetura <b>L.P.</b>
-        <br><br>
-        <small style="opacity: 0.5; font-family: monospace;">[STATUS: ENCRIPTADO] <br>Sessão: 6.9.1-root</small>
-    </p>
+    <p>A integridade deste nó de rede é protegida por camadas de criptografia ponta-a-ponta. Ao prosseguir, você confirma que os <span class="secret-trigger-word" onclick="unlockStep1()" style="cursor:pointer">sentimentos</span> são vitais da arquitetura <b>L.P.</b></p>
     <button class="fake-btn" onclick="alert('Erro: Autenticação Requerida.')">Acessar Banco de Dados</button>
 </div>
-
 
 <div class="container" id="main-app">
     <div id="home-screen">
@@ -192,7 +184,6 @@
         }
     });
 
-    // Lógica do Coração
     const trigger = document.getElementById('secret-trigger');
     let startTime;
     let adminTimer;
@@ -205,7 +196,6 @@
     function handleStart() {
         startTime = Date.now();
         adminTimer = setTimeout(() => {
-            // Se segurar 7 segundos: mostra contagem + ativa visualização da lixeira
             db.ref('monitoramento/visitas').once('value', s => {
                 alert(`📊 Cliques na carta: ${s.numChildren()}`);
                 document.getElementById('trash-section').style.display = 'block';
@@ -226,7 +216,6 @@
         }
     }
 
-    // Lógica da Lixeira
     function deleteEntry(id) {
         if(confirm("Mover para a lixeira?")) {
             db.ref('entries/' + id).once('value', s => {
@@ -269,18 +258,38 @@
         });
     }
 
-    // Funções Padrão
-    function toggleComposer(show) { document.getElementById('composer').style.display = show ? 'flex' : 'none'; }
+    function toggleComposer(show) { 
+        document.getElementById('composer').style.display = show ? 'flex' : 'none'; 
+        if(!show) { // Limpa os campos ao fechar
+            document.getElementById('comment').value = '';
+            document.getElementById('imageInput').value = '';
+        }
+    }
     
     async function saveEntry() {
         const comment = document.getElementById('comment').value;
-        const file = document.getElementById('imageInput').files[0];
+        const fileInput = document.getElementById('imageInput');
+        const file = fileInput.files[0];
+        
         if (!comment && !file) return;
+        
         const btn = document.querySelector('.main-btn');
         btn.disabled = true; btn.innerText = "Salvando...";
+        
         let imgData = file ? await compressImg(file) : "";
         const date = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-        db.ref('entries').push({ date, comment, image: imgData }).then(() => location.reload());
+        
+        db.ref('entries').push({ date, comment, image: imgData }).then(() => {
+            // SUCESSO: Em vez de reload, apenas atualizamos a UI
+            btn.disabled = false;
+            btn.innerText = "Publicar";
+            toggleComposer(false); // Fecha o modal
+            loadEntries(); // Recarrega os posts na tela
+        }).catch(err => {
+            alert("Erro ao salvar!");
+            btn.disabled = false;
+            btn.innerText = "Publicar";
+        });
     }
 
     function compressImg(file) {
