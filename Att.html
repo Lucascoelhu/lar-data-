@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Configurações de Privacidade</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    
+    <style>
+        :root {
+            --primary: #bb86fc;
+            --secondary: #7c3aed;
+            --bg: #0b0b0d;
+            --card: rgba(25, 25, 28, 0.98);
+            --text-dim: #71717a;
+        }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+
+        body { 
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            background-image: radial-gradient(circle at 50% -20%, #2a1b4d 0%, transparent 50%);
+            display: flex; justify-content: center; align-items: flex-start; 
+            min-height: 100vh; margin: 0; color: #fff; padding-top: 20px;
+        }
+
+        /* TELA 1: DISFARCE */
+        #disguise-screen {
+            align-self: center; width: 90%; max-width: 400px; padding: 40px 30px;
+            background: var(--card); border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        #disguise-screen h3 { color: #a1a1aa; font-weight: 500; margin-bottom: 20px; }
+        #disguise-screen p { color: var(--text-dim); font-size: 0.9rem; line-height: 1.6; }
+        .secret-trigger-word { color: var(--text-dim); cursor: default; }
+
+        .fake-btn {
+            margin-top: 25px; width: 100%; padding: 12px;
+            background: #1a1a1e; color: #52525b; border: 1px solid #27272a;
+            border-radius: 12px; font-size: 0.85rem; cursor: pointer;
+        }
+
+        /* TELA 2: LOGIN */
+        .container { 
+            display: none; width: 92%; max-width: 450px; 
+            text-align: center; animation: fadeIn 0.6s;
+        }
+        
+        #home-screen { background: var(--card); padding: 40px 25px; border-radius: 32px; border: 1px solid rgba(255,255,255,0.1); }
+        
+        .heart-icon {
+            font-size: 5rem; display: block; margin: 40px 0;
+            background: linear-gradient(135deg, #bb86fc 0%, #7c3aed 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: breathe 2.5s infinite ease-in-out;
+        }
+
+        /* TELA 3: DIÁRIO */
+        #diary-content { display: none; width: 100%; }
+        
+        .feed-header {
+            display: flex; flex-direction: column; gap: 15px;
+            margin-bottom: 25px; padding: 0 10px;
+        }
+
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
+
+        .exit-btn {
+            background: none; border: none; color: #3f3f46; 
+            font-size: 0.65rem; letter-spacing: 2px; cursor: pointer;
+            text-transform: uppercase; padding: 5px;
+        }
+
+        .btn-link-especial {
+            display: inline-block;
+            text-decoration: none;
+            background: rgba(187, 134, 252, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(187, 134, 252, 0.3);
+            padding: 10px 15px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .add-record-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; border: none; padding: 14px; border-radius: 15px;
+            font-weight: 600; font-size: 0.9rem; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+            width: 100%;
+        }
+
+        /* FORMULÁRIO */
+        #composer {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            z-index: 100; justify-content: center; align-items: center;
+        }
+        .composer-card {
+            background: #16161a; width: 90%; max-width: 400px; padding: 25px;
+            border-radius: 25px; border: 1px solid #27272a;
+        }
+
+        textarea { 
+            width: 100%; height: 150px; padding: 15px; background: #0b0b0d;
+            border: 1px solid #27272a; border-radius: 15px; color: #fff; 
+            outline: none; resize: none; font-size: 1rem;
+        }
+        
+        .main-btn { 
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff; border: none; padding: 15px; border-radius: 15px; 
+            width: 100%; font-weight: 600; margin-top: 15px; cursor: pointer;
+        }
+
+        /* FEED CARDS */
+        #entries-container { width: 100%; padding-bottom: 50px; }
+        .entry { 
+            background: var(--card); padding: 20px; border-radius: 22px; 
+            margin-bottom: 15px; text-align: left; position: relative; 
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .entry-date { font-size: 0.7rem; color: var(--primary); font-weight: bold; margin-bottom: 8px; opacity: 0.7; }
+        .entry-text { font-size: 1rem; line-height: 1.5; color: #e4e4e7; }
+        .entry img { width: 100%; border-radius: 14px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-delete { position: absolute; top: 18px; right: 18px; background: none; color: #3f3f46; border: none; font-size: 1rem; }
+
+        @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div id="disguise-screen">
+    <h3>Privacidade e Segurança</h3>
+    <p>
+        A integridade deste nó de rede é protegida por camadas de criptografia ponta-a-ponta. 
+        Ao prosseguir, você confirma que os 
+        <span class="secret-trigger-word" onclick="unlockStep1()">sentimentos</span> 
+        e registros aqui contidos são fragmentos vitais da arquitetura <b>L.P.</b>
+        <br><br>
+        <small style="opacity: 0.5; font-family: monospace;">[STATUS: ENCRIPTADO] <br>Sessão: 6.9.1-root</small>
+    </p>
+    <button class="fake-btn" onclick="alert('Erro: Autenticação Requerida.')">Acessar Banco de Dados</button>
+</div>
+
+<div class="container" id="main-app">
+    <div id="home-screen">
+        <h1 style="letter-spacing: 8px; font-weight: 200; color: var(--primary); font-size: 1.2rem;">LARIÊ...</h1>
+        <div id="secret-trigger" style="cursor: pointer;"><span class="heart-icon">💜</span></div>
+        <p style="color: var(--text-dim); font-size: 0.7rem; letter-spacing: 2px;">IDENTIDADE REQUERIDA</p>
+    </div>
+
+    <div id="diary-content">
+        <div class="feed-header">
+            <div class="header-top">
+                <h2 style="color: var(--primary); font-weight: 300; margin: 0; font-size: 2.1rem;">PARA ELA... <3</h2>
+                <button class="exit-btn" onclick="location.reload()">Sair</button>
+            </div>
+            
+            <div style="text-align: left;">
+                <a id="btnCarta" href="larissa.html" class="btn-link-especial">✨ Abrir carta especial</a>
+            </div>
+            
+            <button class="add-record-btn" onclick="toggleComposer(true)">+ Novo Registro</button>
+        </div>
+
+        <div id="entries-container"></div>
+    </div>
+</div>
+
+<div id="composer" onclick="if(event.target==this) toggleComposer(false)">
+    <div class="composer-card">
+        <h3 style="margin-top: 0; font-weight: 400; font-size: 1rem;">Novo Registro</h3>
+        <textarea id="comment" placeholder="Escreva algo para ela..."></textarea>
+        <div style="margin-top: 15px; text-align: left;">
+            <input type="file" id="imageInput" accept="image/*" style="font-size: 0.7rem; color: #71717a;">
+        </div>
+        <button class="main-btn" onclick="saveEntry()">Publicar</button>
+        <button onclick="toggleComposer(false)" style="background:none; border:none; color:#52525b; width:100%; margin-top:12px; cursor:pointer; font-size: 0.8rem;">Cancelar</button>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAiwLZG2g_3S7pLkdXQtYqz14rTgd1FPOg",
+        authDomain: "meudiario-59cba.firebaseapp.com",
+        databaseURL: "https://meudiario-59cba-default-rtdb.firebaseio.com", 
+        projectId: "meudiario-59cba",
+        storageBucket: "meudiario-59cba.firebasestorage.app",
+        messagingSenderId: "426502564208",
+        appId: "1:426502564208:web:07839ac5ffd480f95547b5"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    firebase.auth().signInAnonymously();
+
+    let viewRegistered = false;
+
+    function unlockStep1() {
+        document.getElementById('disguise-screen').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block';
+        
+        if (!viewRegistered) {
+            const agora = new Date().toLocaleString('pt-BR');
+            db.ref('monitoramento/visitas').push({
+                data: agora,
+                tipo: "Acesso à tela do Coração"
+            });
+            viewRegistered = true;
+        }
+    }
+
+    const trigger = document.getElementById('secret-trigger');
+    let timer;
+    const startAction = (e) => { e.preventDefault(); timer = setTimeout(askPassword, 1500); };
+    const endAction = () => clearTimeout(timer);
+    trigger.addEventListener('touchstart', startAction);
+    trigger.addEventListener('touchend', endAction);
+    trigger.addEventListener('mousedown', startAction);
+    trigger.addEventListener('mouseup', endAction);
+
+    function askPassword() {
+        const p = prompt("Chave de Segurança:");
+        if (p === "4691") {
+            document.getElementById('home-screen').style.display = 'none';
+            document.getElementById('diary-content').style.display = 'block';
+            loadEntries();
+        }
+    }
+
+    // --- SISTEMA DE 6 CLIQUES NO BOTÃO "CARTA ESPECIAL" ---
+    let adminClicks = 0;
+    const btnCarta = document.getElementById('btnCarta');
+
+    btnCarta.addEventListener('click', (e) => {
+        adminClicks++;
+        
+        if (adminClicks === 6) {
+            e.preventDefault(); // Impede de abrir a página se for o 6º clique rápido
+            db.ref('monitoramento/visitas').once('value', (snapshot) => {
+                const total = snapshot.numChildren();
+                let ultima = "Nenhuma";
+                snapshot.forEach(child => { ultima = child.val().data; });
+                alert(`📊 RELATÓRIO DISCRETO:\n\nTotal de aberturas: ${total}\nÚltima em: ${ultima}`);
+            });
+            adminClicks = 0;
+        }
+
+        // Se demorar mais de 2 segundos entre cliques, o contador zera
+        setTimeout(() => { if(adminClicks < 6) adminClicks = 0; }, 2000);
+    });
+
+    function toggleComposer(show) {
+        document.getElementById('composer').style.display = show ? 'flex' : 'none';
+    }
+
+    function saveEntry() {
+        const comment = document.getElementById('comment').value;
+        const file = document.getElementById('imageInput').files[0];
+        const date = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+        
+        if (!comment && !file) return;
+        const btn = document.querySelector('#composer .main-btn');
+        btn.disabled = true; btn.innerText = "Sincronizando...";
+
+        const pushData = (imgBase64 = "") => {
+            db.ref('entries').push({ date, comment, image: imgBase64 }).then(() => {
+                btn.disabled = false; btn.innerText = "Publicar";
+                document.getElementById('comment').value = '';
+                document.getElementById('imageInput').value = '';
+                toggleComposer(false);
+            });
+        };
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => pushData(e.target.result);
+            reader.readAsDataURL(file);
+        } else { pushData(); }
+    }
+
+    function loadEntries() {
+        db.ref('entries').on('value', (s) => {
+            const container = document.getElementById('entries-container');
+            container.innerHTML = '';
+            const data = s.val();
+            if (data) {
+                Object.keys(data).reverse().forEach(k => {
+                    const item = data[k];
+                    container.innerHTML += `<div class="entry">
+                        <button class="btn-delete" onclick="deleteEntry('${k}')">✕</button>
+                        <div class="entry-date">${item.date}</div>
+                        <div class="entry-text">${item.comment}</div>
+                        ${item.image ? `<img src="${item.image}">` : ''}
+                    </div>`;
+                });
+            }
+        });
+    }
+
+    function deleteEntry(id) { if(confirm("Apagar permanentemente?")) db.ref('entries/'+id).remove(); }
+</script>
+</body>
+</html>
