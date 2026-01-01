@@ -78,7 +78,23 @@
             font-weight: 600; width: 100%; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
         }
 
-        /* LIXEIRA (MODO ADMIN) */
+        /* ESTILOS DA RASPADINHA */
+        .scratch-container {
+            position: relative; width: 100%; height: 110px;
+            margin: 10px 0 20px 0; background: #16161a; border-radius: 18px;
+            overflow: hidden; border: 1px solid rgba(187, 134, 252, 0.15);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .scratch-text {
+            padding: 15px; text-align: center; color: #e4e4e7;
+            font-size: 0.9rem; line-height: 1.4; user-select: none;
+            font-style: italic;
+        }
+        #scratch-canvas {
+            position: absolute; top: 0; left: 0; cursor: crosshair; touch-action: none;
+        }
+
+        /* LIXEIRA */
         #trash-section { display: none; margin-top: 40px; border-top: 1px dashed #333; padding-top: 20px; }
         .trash-title { color: var(--danger); font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 15px; }
 
@@ -124,8 +140,6 @@
     <button class="fake-btn" onclick="alert('Erro: Autenticação Requerida.')">Acessar Banco de Dados</button>
 </div>
 
-
-
 <div class="container" id="main-app">
     <div id="home-screen">
         <h1 style="letter-spacing: 8px; font-weight: 200; color: var(--primary); font-size: 1.2rem;">LARIÊ...</h1>
@@ -139,9 +153,17 @@
                 <h2 style="color: var(--primary); font-weight: 300; margin: 0; font-size: 2.1rem;">PARA ELA... <3</h2>
                 <button class="exit-btn" onclick="location.reload()">Sair</button>
             </div>
+            
             <div style="text-align: left;">
                 <a id="btnCarta" href="larissa.html" class="btn-link-especial">✨ Abrir carta especial</a>
             </div>
+
+            <div class="scratch-container">
+                <div id="scratch-text-element" class="scratch-text">
+                    </div>
+                <canvas id="scratch-canvas"></canvas>
+            </div>
+
             <button class="add-record-btn" onclick="toggleComposer(true)">+ Novo Registro</button>
         </div>
         
@@ -180,11 +202,71 @@
     const db = firebase.database();
     firebase.auth().signInAnonymously();
 
+    // LISTA DE FRASES PARA A RASPADINHA
+    const frasesElogios = [
+        "Seu cabelo é como um horizonte que não termina; uma moldura perfeita que abraça o seu rosto e dança conforme o ritmo do vento.",
+        "Seu sorriso ilumina mais que a Lua em noites claras.",
+        "Você é a pessoa mais incrível que eu já conheci.",
+        "Não existe erro no sistema quando estou com você. ✨",
+        "Você é a peça que faltava no meu quebra-cabeça.",
+        "Seu brilho é único e sua alma é linda demais.",
+        "Esses olhinhos seus são os mais perfeitos que ja vi!",
+        "Você é inteligente, linda e dona de um coração gigante.",
+        "Cada detalhe seu me faz admirar você ainda mais.",
+        "Você é a minha melhor notificação do dia! 📱",
+        "Eu amo a forma como você vê o mundo.",
+        "Sua felicidade é o meu objetivo principal.",
+        "Sua pele carrega o viço das manhãs e o calor do sol; é um território de suavidade onde a beleza resolveu fazer morada permanente.",
+    ];
+
     let isAdmin = localStorage.getItem('modoAdmin') === 'true';
 
     function unlockStep1() {
         document.getElementById('disguise-screen').style.display = 'none';
         document.getElementById('main-app').style.display = 'block';
+    }
+
+    function initScratchCard() {
+        const canvas = document.getElementById('scratch-canvas');
+        const textElement = document.getElementById('scratch-text-element');
+        const container = canvas.parentElement;
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        // Sorteia a frase
+        const fraseSorteada = frasesElogios[Math.floor(Math.random() * frasesElogios.length)];
+        textElement.innerText = fraseSorteada;
+
+        canvas.width = container.offsetWidth;
+        canvas.height = container.offsetHeight;
+
+        // Camada de cobertura
+        ctx.fillStyle = '#27272a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = '#bb86fc';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('RASPE UM ELOGIO 💜', canvas.width/2, canvas.height/2 + 5);
+
+        function scratch(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(x, y, 22, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        canvas.addEventListener('mousedown', () => isDrawing = true);
+        canvas.addEventListener('touchstart', () => isDrawing = true);
+        window.addEventListener('mouseup', () => isDrawing = false);
+        window.addEventListener('touchend', () => isDrawing = false);
+        canvas.addEventListener('mousemove', scratch);
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); scratch(e); });
     }
 
     document.getElementById('btnCarta').addEventListener('click', () => {
@@ -220,6 +302,7 @@
             if (prompt("Chave de Segurança:") === "4691") {
                 document.getElementById('home-screen').style.display = 'none';
                 document.getElementById('diary-content').style.display = 'block';
+                initScratchCard();
                 loadEntries();
             }
         }
@@ -269,7 +352,7 @@
 
     function toggleComposer(show) { 
         document.getElementById('composer').style.display = show ? 'flex' : 'none'; 
-        if(!show) { // Limpa os campos ao fechar
+        if(!show) {
             document.getElementById('comment').value = '';
             document.getElementById('imageInput').value = '';
         }
@@ -289,11 +372,10 @@
         const date = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
         
         db.ref('entries').push({ date, comment, image: imgData }).then(() => {
-            // SUCESSO: Em vez de reload, apenas atualizamos a UI
             btn.disabled = false;
             btn.innerText = "Publicar";
-            toggleComposer(false); // Fecha o modal
-            loadEntries(); // Recarrega os posts na tela
+            toggleComposer(false);
+            loadEntries();
         }).catch(err => {
             alert("Erro ao salvar!");
             btn.disabled = false;
