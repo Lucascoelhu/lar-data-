@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -81,14 +80,15 @@
 
         /* ESTILOS DA RASPADINHA */
         .scratch-container {
-            position: relative; width: 100%; height: 120px;
-            margin: 15px 0; background: #16161a; border-radius: 18px;
+            position: relative; width: 100%; height: 110px;
+            margin: 10px 0 20px 0; background: #16161a; border-radius: 18px;
             overflow: hidden; border: 1px solid rgba(187, 134, 252, 0.15);
             display: flex; align-items: center; justify-content: center;
         }
         .scratch-text {
-            padding: 15px; text-align: center; color: #a1a1aa;
-            font-size: 0.85rem; line-height: 1.4; user-select: none;
+            padding: 15px; text-align: center; color: #e4e4e7;
+            font-size: 0.9rem; line-height: 1.4; user-select: none;
+            font-style: italic;
         }
         #scratch-canvas {
             position: absolute; top: 0; left: 0; cursor: crosshair; touch-action: none;
@@ -159,9 +159,8 @@
             </div>
 
             <div class="scratch-container">
-                <div class="scratch-text">
-                    "O que eu sinto por você não cabe em código, mas começa com cada detalhe que construímos juntos. <b>Te amo!</b>"
-                </div>
+                <div id="scratch-text-element" class="scratch-text">
+                    </div>
                 <canvas id="scratch-canvas"></canvas>
             </div>
 
@@ -203,6 +202,22 @@
     const db = firebase.database();
     firebase.auth().signInAnonymously();
 
+    // LISTA DE FRASES PARA A RASPADINHA
+    const frasesElogios = [
+        "Você é o meu 'commit' favorito em todos os dias. 💜",
+        "Seu sorriso ilumina mais que qualquer tela em modo light.",
+        "Você é a pessoa mais incrível que eu já conheci.",
+        "Não existe erro no sistema quando estou com você. ✨",
+        "Você é a peça que faltava no meu quebra-cabeça.",
+        "Seu brilho é único e sua alma é linda demais.",
+        "Sorte a minha ter você para dividir a vida.",
+        "Você é inteligente, linda e dona de um coração gigante.",
+        "Cada detalhe seu me faz admirar você ainda mais.",
+        "Você é a minha melhor notificação do dia! 📱",
+        "Eu amo a forma como você vê o mundo.",
+        "Sua felicidade é o meu objetivo principal."
+    ];
+
     let isAdmin = localStorage.getItem('modoAdmin') === 'true';
 
     function unlockStep1() {
@@ -210,14 +225,17 @@
         document.getElementById('main-app').style.display = 'block';
     }
 
-    // Lógica da Raspadinha
     function initScratchCard() {
         const canvas = document.getElementById('scratch-canvas');
+        const textElement = document.getElementById('scratch-text-element');
         const container = canvas.parentElement;
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
 
-        // Ajusta tamanho do canvas ao container
+        // Sorteia a frase
+        const fraseSorteada = frasesElogios[Math.floor(Math.random() * frasesElogios.length)];
+        textElement.innerText = fraseSorteada;
+
         canvas.width = container.offsetWidth;
         canvas.height = container.offsetHeight;
 
@@ -225,11 +243,10 @@
         ctx.fillStyle = '#27272a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Texto na raspadinha
         ctx.fillStyle = '#bb86fc';
         ctx.font = 'bold 12px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('RASPE COM O DEDO 💜', canvas.width/2, canvas.height/2 + 5);
+        ctx.fillText('RASPE UM ELOGIO 💜', canvas.width/2, canvas.height/2 + 5);
 
         function scratch(e) {
             if (!isDrawing) return;
@@ -239,7 +256,7 @@
 
             ctx.globalCompositeOperation = 'destination-out';
             ctx.beginPath();
-            ctx.arc(x, y, 20, 0, Math.PI * 2);
+            ctx.arc(x, y, 22, 0, Math.PI * 2);
             ctx.fill();
         }
 
@@ -284,7 +301,7 @@
             if (prompt("Chave de Segurança:") === "4691") {
                 document.getElementById('home-screen').style.display = 'none';
                 document.getElementById('diary-content').style.display = 'block';
-                initScratchCard(); // Inicia a raspadinha quando o diário abrir
+                initScratchCard();
                 loadEntries();
             }
         }
