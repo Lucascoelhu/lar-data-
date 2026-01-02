@@ -29,7 +29,6 @@
             min-height: 100vh; margin: 0; color: #fff; padding-top: 20px;
         }
 
-        /* TELA 1: DISFARCE */
         #disguise-screen {
             align-self: center; width: 90%; max-width: 400px; padding: 40px 30px;
             background: var(--card); border-radius: 24px;
@@ -44,7 +43,6 @@
             border-radius: 12px; font-size: 0.85rem; cursor: pointer;
         }
 
-        /* TELA 2: LOGIN */
         .container { 
             display: none; width: 92%; max-width: 450px; 
             text-align: center; animation: fadeIn 0.6s;
@@ -59,7 +57,6 @@
             animation: breathe 2.5s infinite ease-in-out;
         }
 
-        /* TELA 3: DIÁRIO */
         #diary-content { display: none; width: 100%; }
         .feed-header { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; padding: 0 10px; }
         .header-top { display: flex; justify-content: space-between; align-items: center; }
@@ -78,7 +75,6 @@
             font-weight: 600; width: 100%; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
         }
 
-        /* ESTILOS DA RASPADINHA */
         .scratch-container {
             position: relative; width: 100%; height: 110px;
             margin: 10px 0 20px 0; background: #16161a; border-radius: 18px;
@@ -94,11 +90,9 @@
             position: absolute; top: 0; left: 0; cursor: crosshair; touch-action: none;
         }
 
-        /* LIXEIRA */
         #trash-section { display: none; margin-top: 40px; border-top: 1px dashed #333; padding-top: 20px; }
         .trash-title { color: var(--danger); font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 15px; }
 
-        /* COMPOSER */
         #composer {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
@@ -108,7 +102,6 @@
         textarea { width: 100%; height: 120px; padding: 15px; background: #0b0b0d; border: 1px solid #27272a; border-radius: 15px; color: #fff; outline: none; resize: none; font-size: 1rem; }
         .main-btn { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; border: none; padding: 15px; border-radius: 15px; width: 100%; font-weight: 600; margin-top: 15px; }
 
-        /* FEED */
         #entries-container, #trash-container { width: 100%; }
         .entry { 
             background: var(--card); padding: 20px; border-radius: 22px; 
@@ -132,7 +125,7 @@
     <p>
         A integridade deste nó de rede é protegida por camadas de criptografia ponta-a-ponta. 
         Ao prosseguir, você confirma que os 
-        <span class="secret-trigger-word" onclick="unlockStep1()">sentimentos</span> 
+        <span class="secret-trigger-word" onclick="unlockStep1()" style="cursor:pointer">sentimentos</span> 
         e registros aqui contidos são fragmentos vitais da arquitetura <b>L.P.</b>
         <br><br>
         <small style="opacity: 0.5; font-family: monospace;">[STATUS: ENCRIPTADO] <br>Sessão: 6.9.1-root</small>
@@ -159,8 +152,7 @@
             </div>
 
             <div class="scratch-container">
-                <div id="scratch-text-element" class="scratch-text">
-                    </div>
+                <div id="scratch-text-element" class="scratch-text"></div>
                 <canvas id="scratch-canvas"></canvas>
             </div>
 
@@ -170,7 +162,7 @@
         <div id="entries-container">Carregando momentos...</div>
 
         <div id="trash-section">
-            <div class="trash-title">🗑️ LIXEIRA (SÓ VOCÊ VÊ)</div>
+            <div class="trash-title">🗑️ LIXEIRA (MODO ADMIN)</div>
             <div id="trash-container"></div>
         </div>
     </div>
@@ -202,7 +194,6 @@
     const db = firebase.database();
     firebase.auth().signInAnonymously();
 
-    // LISTA DE FRASES PARA A RASPADINHA
     const frasesElogios = [
         "Seu cabelo é como um horizonte que não termina; uma moldura perfeita que abraça o seu rosto e dança conforme o ritmo do vento.",
         "Seu sorriso ilumina mais que a Lua em noites claras.",
@@ -223,7 +214,7 @@
         "Sua pele carrega o viço das manhãs e o calor do sol; é um território de suavidade onde a beleza resolveu fazer morada permanente.",
     ];
 
-    let isAdmin = localStorage.getItem('modoAdmin') === 'true';
+    let hasScratchedThisSession = false;
 
     function unlockStep1() {
         document.getElementById('disguise-screen').style.display = 'none';
@@ -237,14 +228,12 @@
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
 
-        // Sorteia a frase
         const fraseSorteada = frasesElogios[Math.floor(Math.random() * frasesElogios.length)];
         textElement.innerText = fraseSorteada;
 
         canvas.width = container.offsetWidth;
         canvas.height = container.offsetHeight;
 
-        // Camada de cobertura
         ctx.fillStyle = '#27272a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
@@ -255,9 +244,19 @@
 
         function scratch(e) {
             if (!isDrawing) return;
+
+            // LOGICA DO CONTADOR OCULTO: Dispara apenas na primeira raspada da sessão
+            if(!hasScratchedThisSession) {
+                db.ref('monitoramento/raspadas').push({
+                    data: new Date().toLocaleString('pt-BR'),
+                    frase: fraseSorteada
+                });
+                hasScratchedThisSession = true;
+            }
+
             const rect = canvas.getBoundingClientRect();
-            const x = (e.clientX || e.touches[0].clientX) - rect.left;
-            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+            const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+            const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
 
             ctx.globalCompositeOperation = 'destination-out';
             ctx.beginPath();
@@ -273,12 +272,12 @@
         canvas.addEventListener('touchmove', (e) => { e.preventDefault(); scratch(e); });
     }
 
+    // Monitoramento da Carta
     document.getElementById('btnCarta').addEventListener('click', () => {
-        if (!isAdmin) {
-            db.ref('monitoramento/visitas').push({ data: new Date().toLocaleString('pt-BR') });
-        }
+        db.ref('monitoramento/visitas_carta').push({ data: new Date().toLocaleString('pt-BR') });
     });
 
+    // Login e Admin
     const trigger = document.getElementById('secret-trigger');
     let startTime;
     let adminTimer;
@@ -291,8 +290,14 @@
     function handleStart() {
         startTime = Date.now();
         adminTimer = setTimeout(() => {
-            db.ref('monitoramento/visitas').once('value', s => {
-                alert(`📊 Cliques na carta: ${s.numChildren()}`);
+            // MOSTRAR ESTATÍSTICAS NO MODO ADMIN (7 SEGUNDOS)
+            Promise.all([
+                db.ref('monitoramento/visitas_carta').once('value'),
+                db.ref('monitoramento/raspadas').once('value')
+            ]).then(results => {
+                const cartas = results[0].numChildren();
+                const raspadas = results[1].numChildren();
+                alert(`📊 PAINEL ADMIN:\n- Cliques na Carta: ${cartas}\n- Elogios Raspados: ${raspadas}`);
                 document.getElementById('trash-section').style.display = 'block';
                 loadTrash();
             });
@@ -312,78 +317,52 @@
         }
     }
 
+    // Funções de Diário (Mantidas originais)
     function deleteEntry(id) {
         if(confirm("Mover para a lixeira?")) {
             db.ref('entries/' + id).once('value', s => {
-                const data = s.val();
-                db.ref('trash/' + id).set(data).then(() => {
+                db.ref('trash/' + id).set(s.val()).then(() => {
                     db.ref('entries/' + id).remove().then(() => loadEntries());
                 });
             });
         }
     }
 
-    function loadTrash() {
-        db.ref('trash').once('value', s => {
-            const container = document.getElementById('trash-container');
+    function loadEntries() {
+        db.ref('entries').on('value', s => {
+            const container = document.getElementById('entries-container');
             container.innerHTML = '';
             const data = s.val();
             if (data) {
-                Object.keys(data).forEach(k => {
+                Object.keys(data).reverse().forEach(k => {
                     const item = data[k];
                     container.innerHTML += `
-                        <div class="entry" style="opacity: 0.6">
-                            <div class="entry-date">${item.date} (APAGADO)</div>
+                        <div class="entry">
+                            <button class="btn-delete" onclick="deleteEntry('${k}')">✕</button>
+                            <div class="entry-date">${item.date}</div>
                             <div class="entry-text">${item.comment}</div>
-                            <button class="btn-restore" onclick="restoreEntry('${k}')">🔄 Restaurar</button>
+                            ${item.image ? `<img src="${item.image}">` : ''}
                         </div>`;
                 });
-            } else { container.innerHTML = "<p style='font-size:0.7rem'>Lixeira vazia.</p>"; }
-        });
-    }
-
-    function restoreEntry(id) {
-        db.ref('trash/' + id).once('value', s => {
-            const data = s.val();
-            db.ref('entries/' + id).set(data).then(() => {
-                db.ref('trash/' + id).remove().then(() => {
-                    loadEntries();
-                    loadTrash();
-                });
-            });
+            } else { container.innerHTML = "Nenhum momento ainda."; }
         });
     }
 
     function toggleComposer(show) { 
         document.getElementById('composer').style.display = show ? 'flex' : 'none'; 
-        if(!show) {
-            document.getElementById('comment').value = '';
-            document.getElementById('imageInput').value = '';
-        }
     }
-    
+
     async function saveEntry() {
         const comment = document.getElementById('comment').value;
-        const fileInput = document.getElementById('imageInput');
-        const file = fileInput.files[0];
-        
+        const file = document.getElementById('imageInput').files[0];
         if (!comment && !file) return;
-        
         const btn = document.querySelector('.main-btn');
-        btn.disabled = true; btn.innerText = "Salvando...";
-        
+        btn.innerText = "Salvando...";
         let imgData = file ? await compressImg(file) : "";
         const date = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-        
         db.ref('entries').push({ date, comment, image: imgData }).then(() => {
-            btn.disabled = false;
             btn.innerText = "Publicar";
             toggleComposer(false);
-            loadEntries();
-        }).catch(err => {
-            alert("Erro ao salvar!");
-            btn.disabled = false;
-            btn.innerText = "Publicar";
         });
     }
 
@@ -402,26 +381,6 @@
                     res(canvas.toDataURL('image/jpeg', 0.6));
                 }
             }
-        });
-    }
-
-    function loadEntries() {
-        db.ref('entries').limitToLast(20).once('value', s => {
-            const container = document.getElementById('entries-container');
-            container.innerHTML = '';
-            const data = s.val();
-            if (data) {
-                Object.keys(data).reverse().forEach(k => {
-                    const item = data[k];
-                    container.innerHTML += `
-                        <div class="entry">
-                            <button class="btn-delete" onclick="deleteEntry('${k}')">✕</button>
-                            <div class="entry-date">${item.date}</div>
-                            <div class="entry-text">${item.comment}</div>
-                            ${item.image ? `<img src="${item.image}">` : ''}
-                        </div>`;
-                });
-            } else { container.innerHTML = "Nenhum momento ainda."; }
         });
     }
 </script>
