@@ -318,18 +318,48 @@
         }, 7000);
     }
 
+        // Substitua a função handleEnd e remova a lógica do adminTimer anterior:
+
+    function handleStart() {
+        startTime = Date.now();
+        // Removi o setTimeout de 7 segundos que abria o admin automaticamente
+    }
+
     function handleEnd() {
         const duration = Date.now() - startTime;
         clearTimeout(adminTimer);
-        if (duration >= 1500 && duration < 7000) {
-            if (prompt("Chave de Segurança:") === "4691") {
+
+        if (duration >= 1000) { // Exige um toque de pelo menos 1 segundo para evitar disparos acidentais
+            const senha = prompt("Chave de Segurança:");
+
+            if (senha === "4691") {
+                // ACESSO AO DIÁRIO
                 document.getElementById('home-screen').style.display = 'none';
                 document.getElementById('diary-content').style.display = 'block';
                 initScratchCard();
                 loadEntries();
+            } 
+            else if (senha === "7654") {
+                // ACESSO AO PAINEL DE VISITAS (ADMIN)
+                Promise.all([
+                    db.ref('monitoramento/visitas_carta').once('value'),
+                    db.ref('monitoramento/raspadas').once('value')
+                ]).then(results => {
+                    const cartas = results[0].numChildren();
+                    const raspadas = results[1].numChildren();
+                    alert(`📊 RELATÓRIO DE ACESSOS:\n\n✨ Cliques na Carta: ${cartas}\n💜 Elogios Raspados: ${raspadas}`);
+                    
+                    // Opcional: Mostra a lixeira também ao usar a senha de admin
+                    document.getElementById('trash-section').style.display = 'block';
+                    loadTrash(); 
+                });
+            }
+            else if (senha !== null) {
+                alert("Chave incorreta.");
             }
         }
     }
+
 
     // Funções de Diário (Mantidas originais)
     function deleteEntry(id) {
