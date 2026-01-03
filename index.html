@@ -325,16 +325,24 @@
     trigger.addEventListener('mouseup', handleEnd);
     trigger.addEventListener('touchend', handleEnd);
 
-    function handleEnd() {
+   function handleEnd() {
         const duration = Date.now() - startTime;
         if (duration >= 500) {
             const senha = prompt("Chave de Segurança:");
             if (senha === "4691") {
+                // EFEITO DE CONFETES AO ENTRAR
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#bb86fc', '#7c3aed', '#ffffff']
+                });
+
                 document.getElementById('home-screen').style.display = 'none';
                 document.getElementById('diary-content').style.display = 'block';
                 initScratchCard();
                 loadEntries();
-            } else if (senha === "7654") {
+            } else if (senha === "7645") {
                 // PAINEL ADMIN COMPLETO
                 document.getElementById('home-screen').style.display = 'none';
                 document.getElementById('diary-content').style.display = 'block';
@@ -351,7 +359,6 @@
             } else if (senha) alert("Incorreto.");
         }
     }
-
     function deleteEntry(id) {
         if(confirm("Mover para a lixeira?")) {
             db.ref('entries/' + id).once('value', s => {
