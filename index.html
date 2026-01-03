@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     
     <style>
         :root {
@@ -63,7 +64,6 @@
         .header-top { display: flex; justify-content: space-between; align-items: center; }
         .exit-btn { background: none; border: none; color: #3f3f46; font-size: 0.65rem; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; padding: 5px; }
 
-        /* Estilos do Termómetro de Humor */
         .mood-box {
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.08);
@@ -259,7 +259,6 @@
         document.getElementById('main-app').style.display = 'block';
     }
 
-    // LÓGICA DO TERMÓMETRO (OPÇÃO 3)
     function setMood(mood, emoji) {
         const feedback = document.getElementById('mood-feedback');
         feedback.style.display = 'block';
@@ -271,7 +270,6 @@
 
         feedback.innerText = msg;
 
-        // Envia para o Firebase para o Admin ver
         db.ref('monitoramento/humor').push({
             data: new Date().toLocaleString('pt-BR'),
             estado: mood,
@@ -325,12 +323,12 @@
     trigger.addEventListener('mouseup', handleEnd);
     trigger.addEventListener('touchend', handleEnd);
 
-   function handleEnd() {
+    function handleEnd() {
         const duration = Date.now() - startTime;
         if (duration >= 500) {
             const senha = prompt("Chave de Segurança:");
             if (senha === "4691") {
-                // EFEITO DE CONFETES AO ENTRAR
+                // DISPARA CONFETES
                 confetti({
                     particleCount: 150,
                     spread: 70,
@@ -342,8 +340,7 @@
                 document.getElementById('diary-content').style.display = 'block';
                 initScratchCard();
                 loadEntries();
-            } else if (senha === "7654") {
-                // PAINEL ADMIN COMPLETO
+            } else if (senha === "7654") { // Senha admin corrigida
                 document.getElementById('home-screen').style.display = 'none';
                 document.getElementById('diary-content').style.display = 'block';
                 document.getElementById('trash-section').style.display = 'block';
@@ -359,6 +356,7 @@
             } else if (senha) alert("Incorreto.");
         }
     }
+
     function deleteEntry(id) {
         if(confirm("Mover para a lixeira?")) {
             db.ref('entries/' + id).once('value', s => {
@@ -388,7 +386,6 @@
     }
 
     function loadTrash() {
-        // Carrega humores registrados e lixeira
         db.ref('monitoramento/humor').limitToLast(5).once('value', s => {
             const container = document.getElementById('trash-container');
             container.innerHTML = '<b>Últimos Humores:</b><br>';
