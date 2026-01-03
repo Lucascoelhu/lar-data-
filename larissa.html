@@ -174,6 +174,31 @@
     // você pode usar um serviço gratuito como o "Webhooks.site" ou "IFTTT" 
     // e colocar um fetch() aqui. Mas por ora, o código acima já faz o papel de diário dela.
 </script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
+<script>
+    // Use as mesmas configurações do seu arquivo principal
+    const firebaseConfig = {
+        apiKey: "AIzaSyAiwLZG2g_3S7pLkdXQtYqz14rTgd1FPOg",
+        authDomain: "meudiario-59cba.firebaseapp.com",
+        databaseURL: "https://meudiario-59cba-default-rtdb.firebaseio.com", 
+        projectId: "meudiario-59cba",
+        storageBucket: "meudiario-59cba.firebasestorage.app",
+        messagingSenderId: "426502564208",
+        appId: "1:426502564208:web:07839ac5ffd480f95547b5"
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
+
+    // Registra a visita toda vez que a página carregar
+    db.ref('monitoramento/visitas_carta').push({
+        data: new Date().toLocaleString('pt-BR'),
+        dispositivo: navigator.userAgent
+    });
+</script>
 </body>
 </html>
