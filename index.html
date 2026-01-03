@@ -112,7 +112,6 @@
         .entry-text { font-size: 1rem; line-height: 1.5; color: #e4e4e7; }
         .entry img { width: 100%; border-radius: 14px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.1); }
         .btn-delete { position: absolute; top: 18px; right: 18px; background: none; color: #3f3f46; border: none; font-size: 1rem; cursor: pointer; }
-        .btn-restore { background: #1a1a1e; color: var(--primary); border: 1px solid var(--primary); padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; margin-top: 10px; cursor: pointer; }
 
         @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
@@ -195,7 +194,7 @@
     firebase.auth().signInAnonymously();
 
     const frasesElogios = [
-        "Seu cabelo é como um horizonte que não termina; uma moldura perfeita que abraça o seu rosto e dança conforme o ritmo do vento.",
+         "Seu cabelo é como um horizonte que não termina; uma moldura perfeita que abraça o seu rosto e dança conforme o ritmo do vento.",
         "Seu sorriso ilumina mais que a Lua em noites claras.",
         "Você é o tipo de pessoa que a gente quer guardar num potinho, de tão valiosa.",
         "Você é uma pessoa muito incrível!",
@@ -229,6 +228,7 @@
     ];
 
     let hasScratchedThisSession = false;
+    let startTime;
 
     function unlockStep1() {
         document.getElementById('disguise-screen').style.display = 'none';
@@ -259,7 +259,6 @@
         function scratch(e) {
             if (!isDrawing) return;
 
-            // LOGICA DO CONTADOR OCULTO: Dispara apenas na primeira raspada da sessão
             if(!hasScratchedThisSession) {
                 db.ref('monitoramento/raspadas').push({
                     data: new Date().toLocaleString('pt-BR'),
@@ -286,82 +285,43 @@
         canvas.addEventListener('touchmove', (e) => { e.preventDefault(); scratch(e); });
     }
 
-    // Monitoramento da Carta
     document.getElementById('btnCarta').addEventListener('click', () => {
         db.ref('monitoramento/visitas_carta').push({ data: new Date().toLocaleString('pt-BR') });
     });
 
-    // Login e Admin
     const trigger = document.getElementById('secret-trigger');
-    let startTime;
-    let adminTimer;
 
-    trigger.addEventListener('mousedown', handleStart);
-    trigger.addEventListener('touchstart', (e) => { e.preventDefault(); handleStart(); });
+    trigger.addEventListener('mousedown', () => { startTime = Date.now(); });
+    trigger.addEventListener('touchstart', (e) => { e.preventDefault(); startTime = Date.now(); });
     trigger.addEventListener('mouseup', handleEnd);
     trigger.addEventListener('touchend', handleEnd);
 
-    function handleStart() {
-        startTime = Date.now();
-        adminTimer = setTimeout(() => {
-            // MOSTRAR ESTATÍSTICAS NO MODO ADMIN (7 SEGUNDOS)
-            Promise.all([
-                db.ref('monitoramento/visitas_carta').once('value'),
-                db.ref('monitoramento/raspadas').once('value')
-            ]).then(results => {
-                const cartas = results[0].numChildren();
-                const raspadas = results[1].numChildren();
-                alert(`📊 PAINEL ADMIN:\n- Cliques na Carta: ${cartas}\n- Elogios Raspados: ${raspadas}`);
-                document.getElementById('trash-section').style.display = 'block';
-                loadTrash();
-            });
-        }, 7000);
-    }
-
-        // Substitua a função handleEnd e remova a lógica do adminTimer anterior:
-
-    function handleStart() {
-        startTime = Date.now();
-        // Removi o setTimeout de 7 segundos que abria o admin automaticamente
-    }
-
     function handleEnd() {
         const duration = Date.now() - startTime;
-        clearTimeout(adminTimer);
-
-        if (duration >= 1000) { // Exige um toque de pelo menos 1 segundo para evitar disparos acidentais
+        if (duration >= 500) {
             const senha = prompt("Chave de Segurança:");
-
             if (senha === "4691") {
-                // ACESSO AO DIÁRIO
                 document.getElementById('home-screen').style.display = 'none';
                 document.getElementById('diary-content').style.display = 'block';
                 initScratchCard();
                 loadEntries();
-            } 
-            else if (senha === "7654") {
-                // ACESSO AO PAINEL DE VISITAS (ADMIN)
+            } else if (senha === "7654") {
                 Promise.all([
                     db.ref('monitoramento/visitas_carta').once('value'),
                     db.ref('monitoramento/raspadas').once('value')
                 ]).then(results => {
                     const cartas = results[0].numChildren();
                     const raspadas = results[1].numChildren();
-                    alert(`📊 RELATÓRIO DE ACESSOS:\n\n✨ Cliques na Carta: ${cartas}\n💜 Elogios Raspados: ${raspadas}`);
-                    
-                    // Opcional: Mostra a lixeira também ao usar a senha de admin
+                    alert(`📊 RELATÓRIO:\n\n✨ Cliques na Carta: ${cartas}\n💜 Elogios Raspados: ${raspadas}`);
                     document.getElementById('trash-section').style.display = 'block';
-                    loadTrash(); 
+                    loadTrash();
                 });
-            }
-            else if (senha !== null) {
+            } else if (senha !== null) {
                 alert("Chave incorreta.");
             }
         }
     }
 
-
-    // Funções de Diário (Mantidas originais)
     function deleteEntry(id) {
         if(confirm("Mover para a lixeira?")) {
             db.ref('entries/' + id).once('value', s => {
@@ -392,6 +352,24 @@
         });
     }
 
+    function loadTrash() {
+        db.ref('trash').once('value', s => {
+            const container = document.getElementById('trash-container');
+            container.innerHTML = '';
+            const data = s.val();
+            if (data) {
+                Object.keys(data).forEach(k => {
+                    const item = data[k];
+                    container.innerHTML += `
+                        <div class="entry" style="opacity: 0.6; border: 1px dashed red;">
+                            <div class="entry-date">${item.date} (APAGADO)</div>
+                            <div class="entry-text">${item.comment}</div>
+                        </div>`;
+                });
+            } else { container.innerHTML = "<p>Lixeira vazia.</p>"; }
+        });
+    }
+
     function toggleComposer(show) { 
         document.getElementById('composer').style.display = show ? 'flex' : 'none'; 
     }
@@ -407,6 +385,8 @@
         db.ref('entries').push({ date, comment, image: imgData }).then(() => {
             btn.innerText = "Publicar";
             toggleComposer(false);
+            document.getElementById('comment').value = "";
+            document.getElementById('imageInput').value = "";
         });
     }
 
