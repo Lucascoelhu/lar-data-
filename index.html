@@ -168,7 +168,7 @@
             </div>
 
             <div style="text-align: left;">
-                <a id="btnCarta" href="larissa.html" class="btn-link-especial">✨ Abrir carta especial</a>
+                <a id="btnCarta" href="larissa.html" onclick="registrarClique()" class="btn-link-especial">✨ Abrir carta especial</a>
             </div>
 
             <div class="scratch-container">
@@ -216,6 +216,14 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     firebase.auth().signInAnonymously();
+
+    // FUNÇÃO PARA REGISTRAR CLIQUE NA CARTA
+    function registrarClique() {
+        db.ref('monitoramento/visitas_carta').push({
+            data: new Date().toLocaleString('pt-BR'),
+            evento: "Clique no Botão"
+        });
+    }
 
     const frasesElogios = [
         "Seu cabelo é como um horizonte que não termina; uma moldura perfeita que abraça o seu rosto e dança conforme o ritmo do vento.",
@@ -328,7 +336,6 @@
         if (duration >= 500) {
             const senha = prompt("Chave de Segurança:");
             if (senha === "4691") {
-                // DISPARA CONFETES
                 confetti({
                     particleCount: 150,
                     spread: 70,
@@ -340,7 +347,7 @@
                 document.getElementById('diary-content').style.display = 'block';
                 initScratchCard();
                 loadEntries();
-            } else if (senha === "7654") { // Senha admin corrigida
+            } else if (senha === "7654") { 
                 document.getElementById('home-screen').style.display = 'none';
                 document.getElementById('diary-content').style.display = 'block';
                 document.getElementById('trash-section').style.display = 'block';
