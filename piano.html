@@ -10,7 +10,12 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 
     <style>
-        :root { --w: 55px; --h: 170px; }
+        :root { 
+            --w: 55px; 
+            --h: 170px;
+            /* Cálculo da largura total: 12 teclas brancas * 55px + padding/bordas */
+            --piano-width: 670px; 
+        }
         body { margin: 0; background: #000; color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
         
         #tutorial-screen { width: 100%; padding: 5px; background: #1e272e; text-align: center; font-size: 0.8rem; border-bottom: 1px solid #3498db; }
@@ -33,19 +38,41 @@
         .next-note { background: #f1c40f !important; box-shadow: 0 0 15px #f1c40f; color: black !important; z-index: 3; }
         .playing { background: #2ecc71 !important; }
 
-        /* LISTA ULTRA COMPACTA COM EXCLUIR */
+        /* LISTA ALINHADA AO TAMANHO DO PIANO */
         #recordings-container { 
-            margin: 5px 0; width: 95%; max-height: 80px; overflow-y: auto; 
-            background: rgba(255,255,255,0.03); border-radius: 4px; padding: 2px;
+            margin: 2px 0; 
+            width: fit-content; /* Ajusta à largura do conteúdo do piano */
+            max-width: 95vw; 
+            max-height: 85px; 
+            overflow-y: auto; 
+            background: rgba(255,255,255,0.03); 
+            border-radius: 4px; 
+            padding: 4px;
+            box-sizing: border-box;
         }
+        
+        #recordingsList {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
         .recording-item { 
-            display: flex; justify-content: space-between; align-items: center; 
-            background: #111; margin-bottom: 2px; padding: 3px 8px; border-radius: 2px; font-size: 10px;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #111; 
+            padding: 4px 10px; 
+            border-radius: 2px; 
+            font-size: 10px;
             border-left: 3px solid #2ecc71;
+            /* Garante que o item ocupe a largura total do container */
+            min-width: 280px; 
         }
-        .rec-actions { display: flex; gap: 4px; }
-        .play-mini-btn { background: #2ecc71; color: white; padding: 2px 6px; border-radius: 2px; border: none; font-size: 9px; }
-        .del-mini-btn { background: #e74c3c; color: white; padding: 2px 6px; border-radius: 2px; border: none; font-size: 9px; font-weight: bold; }
+        
+        .rec-actions { display: flex; gap: 5px; }
+        .play-mini-btn { background: #2ecc71; color: white; padding: 3px 8px; border-radius: 2px; border: none; font-size: 9px; }
+        .del-mini-btn { background: #e74c3c; color: white; padding: 3px 8px; border-radius: 2px; border: none; font-size: 9px; font-weight: bold; }
 
         @media screen and (orientation: portrait) {
             #main-app { 
@@ -64,32 +91,35 @@
     </div>
 
     <div class="controls">
-        <button class="btn-learn" onclick="startTutorial()">Aprender 'Brilha Estrelinha'</button>
+        <button class="btn-learn" onclick="startTutorial()">Aprender 'Bilha estrelinha'</button>
         <button id="recordBtn" class="btn-record" onclick="toggleRecording()">Gravar</button>
         <button class="btn-stop" onclick="stopAll()">Parar</button>
     </div>
 
-    <div id="piano">
-        <div class="key white" data-note="261.63" id="C4">DO</div>
-        <div class="key black" data-note="277.18" id="Cs4"></div>
-        <div class="key white" data-note="293.66" id="D4">RE</div>
-        <div class="key black" data-note="311.13" id="Ds4"></div>
-        <div class="key white" data-note="329.63" id="E4">MI</div>
-        <div class="key white" data-note="349.23" id="F4">FA</div>
-        <div class="key black" data-note="369.99" id="Fs4"></div>
-        <div class="key white" data-note="392.00" id="G4">SOL</div>
-        <div class="key black" data-note="415.30" id="Gs4"></div>
-        <div class="key white" data-note="440.00" id="A4">LA</div>
-        <div class="key black" data-note="466.16" id="As4"></div>
-        <div class="key white" data-note="493.88" id="B4">SI</div>
-    </div>
+    <div style="display: inline-block;">
+        <div id="piano">
+            <div class="key white" data-note="261.63" id="C4">DO</div>
+            <div class="key black" data-note="277.18" id="Cs4"></div>
+            <div class="key white" data-note="293.66" id="D4">RE</div>
+            <div class="key black" data-note="311.13" id="Ds4"></div>
+            <div class="key white" data-note="329.63" id="E4">MI</div>
+            <div class="key white" data-note="349.23" id="F4">FA</div>
+            <div class="key black" data-note="369.99" id="Fs4"></div>
+            <div class="key white" data-note="392.00" id="G4">SOL</div>
+            <div class="key black" data-note="415.30" id="Gs4"></div>
+            <div class="key white" data-note="440.00" id="A4">LA</div>
+            <div class="key black" data-note="466.16" id="As4"></div>
+            <div class="key white" data-note="493.88" id="B4">SI</div>
+        </div>
 
-    <div id="recordings-container">
-        <div id="recordingsList"></div>
+        <div id="recordings-container">
+            <div id="recordingsList"></div>
+        </div>
     </div>
 </div>
 
 <script>
+    // Configurações do Firebase permanecem iguais
     const firebaseConfig = {
         apiKey: "AIzaSyAiwLZG2g_3S7pLkdXQtYqz14rTgd1FPOg",
         authDomain: "meudiario-59cba.firebaseapp.com",
@@ -197,7 +227,7 @@
     }
 
     function deleteTrack(key) {
-        if(confirm("Excluir esta gravação da nuvem?")) {
+        if(confirm("Excluir gravação?")) {
             db.ref(`piano/gravacoes/${key}`).remove();
         }
     }
@@ -222,7 +252,6 @@
         stopAll();
         tutorialActive = true;
         tutorialStep = 0;
-        document.getElementById('instruction').innerText = "Siga as notas";
         showNextStep();
     }
 
