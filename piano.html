@@ -5,38 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Piano</title>
     <style>
-        :root { --w: 60px; --h: 250px; }
-        body { margin: 0; background: #121212; color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+        :root { --w: 60px; --h: 200px; } /* Diminuí um pouco a altura para caber a lista em celulares */
+        body { margin: 0; background: #121212; color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; }
         
         #tutorial-screen {
-            width: 100%; padding: 15px; background: #1e272e; text-align: center;
-            font-size: 1.1rem; border-bottom: 3px solid #3498db;
+            width: 100%; padding: 10px; background: #1e272e; text-align: center;
+            font-size: 1rem; border-bottom: 3px solid #3498db;
         }
-        .highlight-text { color: #f1c40f; font-weight: bold; text-shadow: 0 0 8px rgba(241, 196, 15, 0.4); }
+        .highlight-text { color: #f1c40f; font-weight: bold; }
 
-        .controls { margin: 15px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-        button { padding: 12px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .controls { margin: 10px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+        button { padding: 10px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; }
         
         .btn-learn { background: #3498db; color: white; }
         .btn-record { background: #e74c3c; color: white; }
         .btn-stop { background: #57606f; color: white; }
-        button:active { transform: scale(0.95); }
 
-        #piano { display: flex; position: relative; padding: 10px; background: #000; border-radius: 10px; touch-action: none; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        .key { position: relative; cursor: pointer; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 15px; font-weight: bold; transition: 0.1s; touch-action: none; }
+        #piano { display: flex; position: relative; padding: 10px; background: #000; border-radius: 10px; touch-action: none; }
+        .key { position: relative; cursor: pointer; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 15px; font-weight: bold; transition: 0.1s; }
         
         .white { width: var(--w); height: var(--h); background: #fff; border: 1px solid #ccc; border-radius: 0 0 8px 8px; color: #333; z-index: 1; }
-        .black { width: 40px; height: 150px; background: #2f3542; margin: 0 -20px; z-index: 2; border-radius: 0 0 5px 5px; color: white; font-size: 10px; border: 1px solid #000; }
+        .black { width: 34px; height: 120px; background: #2f3542; margin: 0 -17px; z-index: 2; border-radius: 0 0 5px 5px; color: white; font-size: 10px; }
         
-        /* Estados das Teclas */
-        .next-note { background: #f1c40f !important; box-shadow: 0 0 20px #f1c40f; color: black; z-index: 3; }
-        .playing { background: #2ecc71 !important; transform: translateY(2px); }
+        .next-note { background: #f1c40f !important; box-shadow: 0 0 15px #f1c40f; color: black; z-index: 3; }
+        .playing { background: #2ecc71 !important; }
 
-        #recordings-container { margin-top: 10px; width: 90%; max-height: 100px; overflow-y: auto; background: rgba(255,255,255,0.05); border-radius: 8px; padding: 5px; }
-        .recording-item { display: flex; justify-content: space-between; align-items: center; background: #2f3542; margin: 4px; padding: 8px; border-radius: 4px; font-size: 14px; }
+        /* LISTA DE GRAVAÇÕES - AJUSTADA */
+        #recordings-container { 
+            margin: 15px 0; 
+            width: 90%; 
+            max-height: 150px; 
+            overflow-y: auto; 
+            background: rgba(255,255,255,0.05); 
+            border-radius: 8px; 
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .recording-item { display: flex; justify-content: space-between; align-items: center; background: #2f3542; margin-bottom: 8px; padding: 10px; border-radius: 6px; }
 
+        /* CORREÇÃO PARA MOBILE (ROTAÇÃO) */
         @media screen and (orientation: portrait) {
-            #main-app { transform: rotate(90deg); transform-origin: center; width: 100vh; height: 100vw; position: absolute; top: 50%; left: 50%; translate: -50% -50%; display: flex; flex-direction: column; align-items: center; }
+            body { height: 100vw; overflow-y: auto; overflow-x: hidden; }
+            #main-app { 
+                transform: rotate(90deg); 
+                transform-origin: center; 
+                width: 100vh; 
+                height: 100vw; 
+                position: absolute; 
+                top: 50%; 
+                left: 50%; 
+                translate: -50% -50%; 
+                display: flex; 
+                flex-direction: column; 
+                align-items: center;
+                padding-bottom: 50px; /* Espaço para a lista não sumir */
+            }
         }
     </style>
 </head>
@@ -49,7 +72,7 @@
     </div>
 
     <div class="controls">
-        <button class="btn-learn" onclick="startTutorial()">Tutorial 'Brilha estrelinha'</button>
+        <button class="btn-learn" onclick="startTutorial()">Tutorial Estrela</button>
         <button id="recordBtn" class="btn-record" onclick="toggleRecording()">GRAVAR</button>
         <button class="btn-stop" onclick="stopAll()">PARAR TUDO</button>
     </div>
@@ -70,7 +93,9 @@
     </div>
 
     <div id="recordings-container">
-        <div id="recordingsList"></div>
+        <div id="recordingsList">
+            <p style="font-size: 12px; color: #71717a; text-align: center;">Nenhuma gravação ainda.</p>
+        </div>
     </div>
 </div>
 
@@ -80,29 +105,25 @@
     let recordingStartTime = 0;
     let currentSequence = [];
     let allRecordings = [];
-    let activeTimeouts = []; // Lista para rastrear e cancelar sons agendados
+    let activeTimeouts = [];
 
-    // Lógica do Tutorial
-    let tutorialActive = false;
-    let tutorialStep = 0;
     const twinkleSong = [
         {id:'C4', name:'DÓ'}, {id:'C4', name:'DÓ'}, {id:'G4', name:'SOL'}, {id:'G4', name:'SOL'},
         {id:'A4', name:'LÁ'}, {id:'A4', name:'LÁ'}, {id:'G4', name:'SOL'},
         {id:'F4', name:'FÁ'}, {id:'F4', name:'FÁ'}, {id:'E4', name:'MÍ'}, {id:'E4', name:'MÍ'},
         {id:'D4', name:'RÉ'}, {id:'D4', name:'RÉ'}, {id:'C4', name:'DÓ'}
     ];
+    let tutorialActive = false;
+    let tutorialStep = 0;
 
     function playNote(freq, id, isUser = true) {
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
         gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
-
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start();
@@ -114,15 +135,10 @@
             setTimeout(() => el.classList.remove('playing'), 250);
         }
 
-        // Lógica do Tutorial Interativo
         if (tutorialActive && isUser && id === twinkleSong[tutorialStep].id) {
-            el.classList.remove('next-note');
             tutorialStep++;
-            if (tutorialStep < twinkleSong.length) {
-                showNextStep();
-            } else {
-                finishTutorial();
-            }
+            if (tutorialStep < twinkleSong.length) showNextStep();
+            else finishTutorial();
         }
 
         if (isRecording) {
@@ -130,33 +146,19 @@
         }
     }
 
-    // Função para parar tudo
     function stopAll() {
-        // Cancela todos os Timeouts (reprodução de faixas)
         activeTimeouts.forEach(t => clearTimeout(t));
         activeTimeouts = [];
-
-        // Reseta Tutorial
         tutorialActive = false;
-        tutorialStep = 0;
-        document.getElementById('instruction').innerText = "Reprodução parada.";
-        document.getElementById('target-note').innerText = "PRONTO";
-        
-        // Limpa classes visuais
-        document.querySelectorAll('.key').forEach(k => {
-            k.classList.remove('next-note');
-            k.classList.remove('playing');
-        });
-
-        // Para a gravação se estiver ocorrendo
+        document.getElementById('instruction').innerText = "Parado.";
+        document.querySelectorAll('.key').forEach(k => k.classList.remove('next-note'));
         if (isRecording) toggleRecording();
     }
 
     function startTutorial() {
-        stopAll(); // Garante que comece limpo
+        stopAll();
         tutorialActive = true;
         tutorialStep = 0;
-        document.getElementById('instruction').innerText = "Siga a nota: ";
         showNextStep();
     }
 
@@ -169,19 +171,13 @@
 
     function finishTutorial() {
         tutorialActive = false;
-        document.getElementById('instruction').innerText = "Muito bem!";
-        document.getElementById('target-note').innerText = "FINALIZADO";
+        document.getElementById('target-note').innerText = "FINALIZADO!";
     }
 
-    // Gerenciamento de Cliques/Toques
-    const keys = document.querySelectorAll('.key');
-    keys.forEach(key => {
-        const handleAction = (e) => {
-            e.preventDefault();
-            playNote(parseFloat(key.dataset.note), key.id);
-        };
-        key.addEventListener('touchstart', handleAction);
-        key.addEventListener('mousedown', handleAction);
+    document.querySelectorAll('.key').forEach(key => {
+        const action = (e) => { e.preventDefault(); playNote(parseFloat(key.dataset.note), key.id); };
+        key.addEventListener('mousedown', action);
+        key.addEventListener('touchstart', action);
     });
 
     function toggleRecording() {
@@ -192,12 +188,10 @@
             recordingStartTime = audioCtx.currentTime;
             btn.innerText = "PARAR GRAV.";
             btn.style.background = "#f1c40f";
-            btn.style.color = "black";
         } else {
             isRecording = false;
             btn.innerText = "GRAVAR";
             btn.style.background = "#e74c3c";
-            btn.style.color = "white";
             if(currentSequence.length > 0) {
                 allRecordings.push([...currentSequence]);
                 updateList();
@@ -209,22 +203,17 @@
         const list = document.getElementById('recordingsList');
         list.innerHTML = allRecordings.map((rec, i) => `
             <div class="recording-item">
-                <span>Música ${i+1} (${rec.length} notas)</span>
-                <button onclick="playTrack(${i})" style="background:#2ecc71; color:white; padding:5px 12px;">OUVIR</button>
+                <span>Grav. ${i+1}</span>
+                <button onclick="playTrack(${i})" style="background:#2ecc71; color:white;">OUVIR</button>
             </div>
         `).join('');
     }
 
     function playTrack(idx) {
-        stopAll(); // Para qualquer som atual antes de começar a faixa
+        stopAll();
         const track = allRecordings[idx];
-        document.getElementById('instruction').innerText = "Ouvindo:";
-        document.getElementById('target-note').innerText = `MÚSICA ${idx+1}`;
-
         track.forEach(n => {
-            const t = setTimeout(() => {
-                playNote(n.freq, n.id, false);
-            }, n.time * 1000);
+            const t = setTimeout(() => playNote(n.freq, n.id, false), n.time * 1000);
             activeTimeouts.push(t);
         });
     }
