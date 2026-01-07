@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     
     <style>
         :root {
@@ -17,6 +18,7 @@
             --card: rgba(25, 25, 28, 0.98);
             --text-dim: #71717a;
             --danger: #ff4444;
+            --success: #4ade80;
         }
 
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
@@ -29,7 +31,6 @@
             min-height: 100vh; margin: 0; color: #fff; padding-top: 20px;
         }
 
-        /* TELA 1: DISFARCE */
         #disguise-screen {
             align-self: center; width: 90%; max-width: 400px; padding: 40px 30px;
             background: var(--card); border-radius: 24px;
@@ -44,7 +45,6 @@
             border-radius: 12px; font-size: 0.85rem; cursor: pointer;
         }
 
-        /* TELA 2: LOGIN */
         .container { 
             display: none; width: 92%; max-width: 450px; 
             text-align: center; animation: fadeIn 0.6s;
@@ -59,11 +59,26 @@
             animation: breathe 2.5s infinite ease-in-out;
         }
 
-        /* TELA 3: DIÁRIO */
         #diary-content { display: none; width: 100%; }
         .feed-header { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; padding: 0 10px; }
         .header-top { display: flex; justify-content: space-between; align-items: center; }
         .exit-btn { background: none; border: none; color: #3f3f46; font-size: 0.65rem; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; padding: 5px; }
+
+        .mood-box {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .mood-title { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 12px; letter-spacing: 1px; }
+        .mood-btns { display: flex; justify-content: space-around; font-size: 1.8rem; }
+        .mood-btn { cursor: pointer; transition: transform 0.2s; filter: grayscale(0.5); }
+        .mood-btn:hover { transform: scale(1.2); filter: grayscale(0); }
+        #mood-feedback { 
+            display: none; margin-top: 10px; font-size: 0.85rem; 
+            color: var(--primary); font-style: italic; animation: fadeIn 0.5s;
+        }
 
         .btn-link-especial {
             display: inline-block; text-decoration: none;
@@ -72,44 +87,22 @@
             border-radius: 12px; font-size: 0.8rem; margin-bottom: 10px;
         }
 
-        .add-record-btn {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white; border: none; padding: 14px; border-radius: 15px;
-            font-weight: 600; width: 100%; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
-        }
-
-        /* ESTILOS DA RASPADINHA */
         .scratch-container {
             position: relative; width: 100%; height: 110px;
             margin: 10px 0 20px 0; background: #16161a; border-radius: 18px;
             overflow: hidden; border: 1px solid rgba(187, 134, 252, 0.15);
             display: flex; align-items: center; justify-content: center;
         }
-        .scratch-text {
-            padding: 15px; text-align: center; color: #e4e4e7;
-            font-size: 0.9rem; line-height: 1.4; user-select: none;
-            font-style: italic;
-        }
-        #scratch-canvas {
-            position: absolute; top: 0; left: 0; cursor: crosshair; touch-action: none;
+        .scratch-text { padding: 15px; text-align: center; color: #e4e4e7; font-size: 0.9rem; line-height: 1.4; font-style: italic; }
+        #scratch-canvas { position: absolute; top: 0; left: 0; cursor: crosshair; touch-action: none; }
+
+        .add-record-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; border: none; padding: 14px; border-radius: 15px;
+            font-weight: 600; width: 100%; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
         }
 
-        /* LIXEIRA */
-        #trash-section { display: none; margin-top: 40px; border-top: 1px dashed #333; padding-top: 20px; }
-        .trash-title { color: var(--danger); font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 15px; }
-
-        /* COMPOSER */
-        #composer {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
-            z-index: 100; justify-content: center; align-items: center;
-        }
-        .composer-card { background: #16161a; width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; border: 1px solid #27272a; }
-        textarea { width: 100%; height: 120px; padding: 15px; background: #0b0b0d; border: 1px solid #27272a; border-radius: 15px; color: #fff; outline: none; resize: none; font-size: 1rem; }
-        .main-btn { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; border: none; padding: 15px; border-radius: 15px; width: 100%; font-weight: 600; margin-top: 15px; }
-
-        /* FEED */
-        #entries-container, #trash-container { width: 100%; }
+        #entries-container { width: 100%; margin-top: 20px; }
         .entry { 
             background: var(--card); padding: 20px; border-radius: 22px; 
             margin-bottom: 15px; text-align: left; position: relative; 
@@ -119,7 +112,17 @@
         .entry-text { font-size: 1rem; line-height: 1.5; color: #e4e4e7; }
         .entry img { width: 100%; border-radius: 14px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.1); }
         .btn-delete { position: absolute; top: 18px; right: 18px; background: none; color: #3f3f46; border: none; font-size: 1rem; cursor: pointer; }
-        .btn-restore { background: #1a1a1e; color: var(--primary); border: 1px solid var(--primary); padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; margin-top: 10px; cursor: pointer; }
+
+        #trash-section { display: none; margin-top: 40px; border-top: 1px dashed #333; padding-top: 20px; }
+
+        #composer {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            z-index: 100; justify-content: center; align-items: center;
+        }
+        .composer-card { background: #16161a; width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; border: 1px solid #27272a; }
+        textarea { width: 100%; height: 120px; padding: 15px; background: #0b0b0d; border: 1px solid #27272a; border-radius: 15px; color: #fff; outline: none; resize: none; font-size: 1rem; }
+        .main-btn { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; border: none; padding: 15px; border-radius: 15px; width: 100%; font-weight: 600; margin-top: 15px; }
 
         @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
@@ -132,7 +135,7 @@
     <p>
         A integridade deste nó de rede é protegida por camadas de criptografia ponta-a-ponta. 
         Ao prosseguir, você confirma que os 
-        <span class="secret-trigger-word" onclick="unlockStep1()">sentimentos</span> 
+        <span class="secret-trigger-word" onclick="unlockStep1()" style="cursor:pointer">sentimentos</span> 
         e registros aqui contidos são fragmentos vitais da arquitetura <b>L.P.</b>
         <br><br>
         <small style="opacity: 0.5; font-family: monospace;">[STATUS: ENCRIPTADO] <br>Sessão: 6.9.1-root</small>
@@ -154,13 +157,23 @@
                 <button class="exit-btn" onclick="location.reload()">Sair</button>
             </div>
             
-            <div style="text-align: left;">
-                <a id="btnCarta" href="larissa.html" class="btn-link-especial">✨ Abrir carta especial</a>
+            <div class="mood-box">
+                <div class="mood-title">COMO ESTÁS HOJE, LARISSA?</div>
+                <div class="mood-btns">
+                    <span class="mood-btn" onclick="setMood('Radiante', '😊')">😊</span>
+                    <span class="mood-btn" onclick="setMood('Normal', '😐')">😐</span>
+                    <span class="mood-btn" onclick="setMood('Triste/Cansada', '😔')">😔</span>
+                </div>
+                <div id="mood-feedback"></div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <a id="btnCarta" href="larissa.html" onclick="registrarClique()" class="btn-link-especial" style="flex: 1; margin-bottom: 0; text-align: center; padding: 12px 5px;">✨ Carta Especial</a>
+                <a id="btnPiano" href="piano.html" class="btn-link-especial" style="flex: 1; margin-bottom: 0; text-align: center; padding: 12px 5px; background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.2); color: #fff;">🎹 Piano pra ela</a>
             </div>
 
             <div class="scratch-container">
-                <div id="scratch-text-element" class="scratch-text">
-                    </div>
+                <div id="scratch-text-element" class="scratch-text"></div>
                 <canvas id="scratch-canvas"></canvas>
             </div>
 
@@ -170,7 +183,10 @@
         <div id="entries-container">Carregando momentos...</div>
 
         <div id="trash-section">
-            <div class="trash-title">🗑️ LIXEIRA (SÓ VOCÊ VÊ)</div>
+            <div id="admin-stats-box" style="background: #1a1a1e; padding: 15px; border-radius: 15px; margin-bottom: 20px; text-align: left; font-size: 0.8rem; color: var(--primary);">
+                <b>ESTATÍSTICAS DE ACESSO:</b> <span id="stats-content"></span>
+            </div>
+            <div style="color: var(--danger); font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 15px;">🗑️ LIXEIRA & HISTÓRICO</div>
             <div id="trash-container"></div>
         </div>
     </div>
@@ -202,28 +218,72 @@
     const db = firebase.database();
     firebase.auth().signInAnonymously();
 
-    // LISTA DE FRASES PARA A RASPADINHA
+    // FUNÇÃO PARA REGISTRAR CLIQUE NA CARTA
+    function registrarClique() {
+        db.ref('monitoramento/visitas_carta').push({
+            data: new Date().toLocaleString('pt-BR'),
+            evento: "Clique no Botão"
+        });
+    }
+
     const frasesElogios = [
         "Seu cabelo é como um horizonte que não termina; uma moldura perfeita que abraça o seu rosto e dança conforme o ritmo do vento.",
         "Seu sorriso ilumina mais que a Lua em noites claras.",
-        "Você é a pessoa mais incrível que eu já conheci.",
-        "Não existe erro no sistema quando estou com você. ✨",
-        "Você é a peça que faltava no meu quebra-cabeça.",
+        "Você é o tipo de pessoa que a gente quer guardar num potinho, de tão valiosa.",
+        "Você é uma pessoa muito incrível!",
+        "Não permita que nada te abale, hoje.",
+        "Faltam palavras para descrever o quanto você me encanta.",
+        "Você é aquela raridade que a gente tem sorte de encontrar.",
+        "Sorria. Seu sorriso é um remédio perfeito.",
+        "Só pra te lembrar: você é incrível hoje e sempre.",
+        "Se a vida fizer brotar lágrimas nos seus olhos, permita-me te secar-las",
         "Seu brilho é único e sua alma é linda demais.",
+        "Cada detalhe seu, da pontinha do pé até o último fio de cabelo, é impecável.",
+        "O 'jeito Larissa de ser' é o meu detalhe favorito.",
         "Esses olhinhos seus são os mais perfeitos que ja vi!",
+        "Sua postura e suas curvas têm uma elegância que é só sua, Larissa.",
         "Você é inteligente, linda e dona de um coração gigante.",
         "Cada detalhe seu me faz admirar você ainda mais.",
-        "Você é a minha melhor notificação do dia! 📱",
+        "Admirar você é a coisa mais fácil do mundo.",
+        "Adoro o desenho da sua sobrancelha; ela molda o seu olhar de um jeito perfeito.",
+        "Se o objetivo era me encantar, parabéns, você conseguiu com sobra.",
+        "Seu perfume divino é o complemento de tudo o que você é.",
+        "Cada detalhe seu me faz admirar ainda mais o conjunto.",
         "Eu amo a forma como você vê o mundo.",
+        "Adoro como o seu cabelo combina exatamente com a sua personalidade.",
+        "Existem pessoas comuns e existe você, que é extraordinária.",
+        "Cada detalhe seu me faz admirar ainda mais o conjunto.",
+        "Seu nome é o primeiro que vem à cabeça quando penso em algo bom.",
+        "Você é a prova de que a perfeição mora nos pequenos detalhes e no carisma único.",
         "Sua felicidade é o meu objetivo principal.",
+        "Seu abraço demorado é o lugar onde o mundo finalmente faz sentido.",
         "Sua pele carrega o viço das manhãs e o calor do sol; é um território de suavidade onde a beleza resolveu fazer morada permanente.",
     ];
 
-    let isAdmin = localStorage.getItem('modoAdmin') === 'true';
+    let startTime;
+    let hasScratched = false;
 
     function unlockStep1() {
         document.getElementById('disguise-screen').style.display = 'none';
         document.getElementById('main-app').style.display = 'block';
+    }
+
+    function setMood(mood, emoji) {
+        const feedback = document.getElementById('mood-feedback');
+        feedback.style.display = 'block';
+        
+        let msg = "";
+        if(mood === 'Radiante') msg = "Fico tão feliz por estares bem! Que o teu brilho continue assim. ✨";
+        if(mood === 'Normal') msg = "Um dia tranquilo também é uma vitória. Estou aqui contigo. 💜";
+        if(mood === 'Triste/Cansada') msg = "Sinto muito que o dia esteja pesado. Lembra-te: tu és incrível e eu estou aqui para ti. 🫂";
+
+        feedback.innerText = msg;
+
+        db.ref('monitoramento/humor').push({
+            data: new Date().toLocaleString('pt-BR'),
+            estado: mood,
+            emoji: emoji
+        });
     }
 
     function initScratchCard() {
@@ -233,17 +293,13 @@
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
 
-        // Sorteia a frase
-        const fraseSorteada = frasesElogios[Math.floor(Math.random() * frasesElogios.length)];
-        textElement.innerText = fraseSorteada;
+        const frase = frasesElogios[Math.floor(Math.random() * frasesElogios.length)];
+        textElement.innerText = frase;
 
         canvas.width = container.offsetWidth;
         canvas.height = container.offsetHeight;
-
-        // Camada de cobertura
         ctx.fillStyle = '#27272a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
         ctx.fillStyle = '#bb86fc';
         ctx.font = 'bold 12px sans-serif';
         ctx.textAlign = 'center';
@@ -251,14 +307,15 @@
 
         function scratch(e) {
             if (!isDrawing) return;
+            if(!hasScratched) {
+                db.ref('monitoramento/raspadas').push({ data: new Date().toLocaleString('pt-BR'), frase: frase });
+                hasScratched = true;
+            }
             const rect = canvas.getBoundingClientRect();
             const x = (e.clientX || e.touches[0].clientX) - rect.left;
             const y = (e.clientY || e.touches[0].clientY) - rect.top;
-
             ctx.globalCompositeOperation = 'destination-out';
-            ctx.beginPath();
-            ctx.arc(x, y, 22, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI * 2); ctx.fill();
         }
 
         canvas.addEventListener('mousedown', () => isDrawing = true);
@@ -269,117 +326,95 @@
         canvas.addEventListener('touchmove', (e) => { e.preventDefault(); scratch(e); });
     }
 
-    document.getElementById('btnCarta').addEventListener('click', () => {
-        if (!isAdmin) {
-            db.ref('monitoramento/visitas').push({ data: new Date().toLocaleString('pt-BR') });
-        }
-    });
-
     const trigger = document.getElementById('secret-trigger');
-    let startTime;
-    let adminTimer;
-
-    trigger.addEventListener('mousedown', handleStart);
-    trigger.addEventListener('touchstart', (e) => { e.preventDefault(); handleStart(); });
+    trigger.addEventListener('mousedown', () => startTime = Date.now());
+    trigger.addEventListener('touchstart', (e) => { e.preventDefault(); startTime = Date.now(); });
     trigger.addEventListener('mouseup', handleEnd);
     trigger.addEventListener('touchend', handleEnd);
 
-    function handleStart() {
-        startTime = Date.now();
-        adminTimer = setTimeout(() => {
-            db.ref('monitoramento/visitas').once('value', s => {
-                alert(`📊 Cliques na carta: ${s.numChildren()}`);
-                document.getElementById('trash-section').style.display = 'block';
-                loadTrash();
-            });
-        }, 7000);
-    }
-
     function handleEnd() {
         const duration = Date.now() - startTime;
-        clearTimeout(adminTimer);
-        if (duration >= 1500 && duration < 7000) {
-            if (prompt("Chave de Segurança:") === "4691") {
+        if (duration >= 500) {
+            const senha = prompt("Chave de Segurança:");
+            if (senha === "4691") {
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#bb86fc', '#7c3aed', '#ffffff']
+                });
+
                 document.getElementById('home-screen').style.display = 'none';
                 document.getElementById('diary-content').style.display = 'block';
                 initScratchCard();
                 loadEntries();
-            }
+            } else if (senha === "7654") { 
+                document.getElementById('home-screen').style.display = 'none';
+                document.getElementById('diary-content').style.display = 'block';
+                document.getElementById('trash-section').style.display = 'block';
+                
+                db.ref('monitoramento').once('value', s => {
+                    const m = s.val();
+                    const v = m.visitas_carta ? Object.keys(m.visitas_carta).length : 0;
+                    const r = m.raspadas ? Object.keys(m.raspadas).length : 0;
+                    document.getElementById('stats-content').innerHTML = `<br>✨ Carta: ${v} | 💜 Raspadinhas: ${r}`;
+                });
+                loadEntries();
+                loadTrash();
+            } else if (senha) alert("Incorreto.");
         }
     }
 
     function deleteEntry(id) {
         if(confirm("Mover para a lixeira?")) {
             db.ref('entries/' + id).once('value', s => {
-                const data = s.val();
-                db.ref('trash/' + id).set(data).then(() => {
-                    db.ref('entries/' + id).remove().then(() => loadEntries());
+                db.ref('trash/' + id).set(s.val()).then(() => {
+                    db.ref('entries/' + id).remove();
                 });
             });
         }
     }
 
-    function loadTrash() {
-        db.ref('trash').once('value', s => {
-            const container = document.getElementById('trash-container');
+    function loadEntries() {
+        db.ref('entries').on('value', s => {
+            const container = document.getElementById('entries-container');
             container.innerHTML = '';
             const data = s.val();
             if (data) {
-                Object.keys(data).forEach(k => {
-                    const item = data[k];
-                    container.innerHTML += `
-                        <div class="entry" style="opacity: 0.6">
-                            <div class="entry-date">${item.date} (APAGADO)</div>
-                            <div class="entry-text">${item.comment}</div>
-                            <button class="btn-restore" onclick="restoreEntry('${k}')">🔄 Restaurar</button>
-                        </div>`;
+                Object.keys(data).reverse().forEach(k => {
+                    container.innerHTML += `<div class="entry">
+                        <button class="btn-delete" onclick="deleteEntry('${k}')">✕</button>
+                        <div class="entry-date">${data[k].date}</div>
+                        <div class="entry-text">${data[k].comment}</div>
+                        ${data[k].image ? `<img src="${data[k].image}">` : ''}
+                    </div>`;
                 });
-            } else { container.innerHTML = "<p style='font-size:0.7rem'>Lixeira vazia.</p>"; }
+            } else container.innerHTML = "Sem momentos.";
         });
     }
 
-    function restoreEntry(id) {
-        db.ref('trash/' + id).once('value', s => {
+    function loadTrash() {
+        db.ref('monitoramento/humor').limitToLast(5).once('value', s => {
+            const container = document.getElementById('trash-container');
+            container.innerHTML = '<b>Últimos Humores:</b><br>';
             const data = s.val();
-            db.ref('entries/' + id).set(data).then(() => {
-                db.ref('trash/' + id).remove().then(() => {
-                    loadEntries();
-                    loadTrash();
-                });
+            if(data) Object.keys(data).reverse().forEach(k => {
+                container.innerHTML += `<div style="font-size:0.7rem; margin-bottom:5px;">• ${data[k].data}: ${data[k].emoji} (${data[k].estado})</div>`;
             });
         });
     }
 
-    function toggleComposer(show) { 
-        document.getElementById('composer').style.display = show ? 'flex' : 'none'; 
-        if(!show) {
-            document.getElementById('comment').value = '';
-            document.getElementById('imageInput').value = '';
-        }
-    }
-    
+    function toggleComposer(show) { document.getElementById('composer').style.display = show ? 'flex' : 'none'; }
+
     async function saveEntry() {
         const comment = document.getElementById('comment').value;
-        const fileInput = document.getElementById('imageInput');
-        const file = fileInput.files[0];
-        
+        const file = document.getElementById('imageInput').files[0];
         if (!comment && !file) return;
-        
-        const btn = document.querySelector('.main-btn');
-        btn.disabled = true; btn.innerText = "Salvando...";
-        
-        let imgData = file ? await compressImg(file) : "";
         const date = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-        
+        let imgData = file ? await compressImg(file) : "";
         db.ref('entries').push({ date, comment, image: imgData }).then(() => {
-            btn.disabled = false;
-            btn.innerText = "Publicar";
             toggleComposer(false);
-            loadEntries();
-        }).catch(err => {
-            alert("Erro ao salvar!");
-            btn.disabled = false;
-            btn.innerText = "Publicar";
+            document.getElementById('comment').value = "";
         });
     }
 
@@ -398,26 +433,6 @@
                     res(canvas.toDataURL('image/jpeg', 0.6));
                 }
             }
-        });
-    }
-
-    function loadEntries() {
-        db.ref('entries').limitToLast(20).once('value', s => {
-            const container = document.getElementById('entries-container');
-            container.innerHTML = '';
-            const data = s.val();
-            if (data) {
-                Object.keys(data).reverse().forEach(k => {
-                    const item = data[k];
-                    container.innerHTML += `
-                        <div class="entry">
-                            <button class="btn-delete" onclick="deleteEntry('${k}')">✕</button>
-                            <div class="entry-date">${item.date}</div>
-                            <div class="entry-text">${item.comment}</div>
-                            ${item.image ? `<img src="${item.image}">` : ''}
-                        </div>`;
-                });
-            } else { container.innerHTML = "Nenhum momento ainda."; }
         });
     }
 </script>
