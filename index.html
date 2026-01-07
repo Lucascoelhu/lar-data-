@@ -218,7 +218,6 @@
     const db = firebase.database();
     firebase.auth().signInAnonymously();
 
-    // FUNÇÃO PARA REGISTRAR CLIQUE NA CARTA
     function registrarClique() {
         db.ref('monitoramento/visitas_carta').push({
             data: new Date().toLocaleString('pt-BR'),
@@ -263,22 +262,28 @@
     let startTime;
     let hasScratched = false;
 
+    // --- FUNÇÃO MODIFICADA ABAIXO ---
     function unlockStep1() {
+        // Abre o link em nova aba
+        window.open('bom-dia.html', '_blank');
+
+        // Desbloqueia a tela principal no fundo (mesma lógica de antes)
         document.getElementById('disguise-screen').style.display = 'none';
         document.getElementById('main-app').style.display = 'block';
+
+        /* PARA DESATIVAR O BOM DIA E VOLTAR AO NORMAL:
+           Basta comentar a linha "window.open" acima adicionando // no início dela.
+        */
     }
 
     function setMood(mood, emoji) {
         const feedback = document.getElementById('mood-feedback');
         feedback.style.display = 'block';
-        
         let msg = "";
         if(mood === 'Radiante') msg = "Fico tão feliz por estares bem! Que o teu brilho continue assim. ✨";
         if(mood === 'Normal') msg = "Um dia tranquilo também é uma vitória. Estou aqui contigo. 💜";
         if(mood === 'Triste/Cansada') msg = "Sinto muito que o dia esteja pesado. Lembra-te: tu és incrível e eu estou aqui para ti. 🫂";
-
         feedback.innerText = msg;
-
         db.ref('monitoramento/humor').push({
             data: new Date().toLocaleString('pt-BR'),
             estado: mood,
@@ -292,10 +297,8 @@
         const container = canvas.parentElement;
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
-
         const frase = frasesElogios[Math.floor(Math.random() * frasesElogios.length)];
         textElement.innerText = frase;
-
         canvas.width = container.offsetWidth;
         canvas.height = container.offsetHeight;
         ctx.fillStyle = '#27272a';
@@ -304,7 +307,6 @@
         ctx.font = 'bold 12px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('RASPE UM ELOGIO 💜', canvas.width/2, canvas.height/2 + 5);
-
         function scratch(e) {
             if (!isDrawing) return;
             if(!hasScratched) {
@@ -317,7 +319,6 @@
             ctx.globalCompositeOperation = 'destination-out';
             ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI * 2); ctx.fill();
         }
-
         canvas.addEventListener('mousedown', () => isDrawing = true);
         canvas.addEventListener('touchstart', () => isDrawing = true);
         window.addEventListener('mouseup', () => isDrawing = false);
@@ -343,7 +344,6 @@
                     origin: { y: 0.6 },
                     colors: ['#bb86fc', '#7c3aed', '#ffffff']
                 });
-
                 document.getElementById('home-screen').style.display = 'none';
                 document.getElementById('diary-content').style.display = 'block';
                 initScratchCard();
@@ -352,7 +352,6 @@
                 document.getElementById('home-screen').style.display = 'none';
                 document.getElementById('diary-content').style.display = 'block';
                 document.getElementById('trash-section').style.display = 'block';
-                
                 db.ref('monitoramento').once('value', s => {
                     const m = s.val();
                     const v = m.visitas_carta ? Object.keys(m.visitas_carta).length : 0;
