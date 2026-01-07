@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -109,7 +109,7 @@
             border: 1px solid rgba(255,255,255,0.05); animation: fadeIn 0.4s;
         }
         .entry-date { font-size: 0.7rem; color: var(--primary); font-weight: bold; margin-bottom: 8px; opacity: 0.7; }
-        .entry-text { font-size: 1rem; line-height: 1.5; color: #e4e4e7; }
+        .entry-text { font-size: 1rem; line-height: 1.5; color: #e4e4e7; white-space: pre-wrap; }
         .entry img { width: 100%; border-radius: 14px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.1); }
         .btn-delete { position: absolute; top: 18px; right: 18px; background: none; color: #3f3f46; border: none; font-size: 1rem; cursor: pointer; }
 
@@ -121,8 +121,25 @@
             z-index: 100; justify-content: center; align-items: center;
         }
         .composer-card { background: #16161a; width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; border: 1px solid #27272a; }
-        textarea { width: 100%; height: 120px; padding: 15px; background: #0b0b0d; border: 1px solid #27272a; border-radius: 15px; color: #fff; outline: none; resize: none; font-size: 1rem; }
-        .main-btn { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; border: none; padding: 15px; border-radius: 15px; width: 100%; font-weight: 600; margin-top: 15px; }
+        
+        textarea { 
+            width: 100%; height: 140px; padding: 15px; background: #0b0b0d; 
+            border: 1px solid #27272a; border-radius: 15px; color: #fff; 
+            outline: none; resize: none; font-size: 1rem; font-family: inherit;
+            line-height: 1.5;
+        }
+        
+        .main-btn { 
+            background: linear-gradient(135deg, #bb86fc 0%, #7c3aed 100%); 
+            color: #fff; border: none; padding: 16px; border-radius: 15px; 
+            width: 100%; font-weight: 700; margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+        .main-btn:active { transform: scale(0.97); filter: brightness(1.1); }
 
         @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
@@ -168,7 +185,7 @@
             </div>
 
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <a id="btnCarta" href="larissa.html" onclick="registrarClique()" class="btn-link-especial" style="flex: 1; margin-bottom: 0; text-align: center; padding: 12px 5px;">✨ Carta Especial</a>
+                <a id="btnCarta" href="bom-dia.html" onclick="registrarClique()" class="btn-link-especial" style="flex: 1; margin-bottom: 0; text-align: center; padding: 12px 5px;">✨ Carta Especial</a>
                 <a id="btnPiano" href="piano.html" class="btn-link-especial" style="flex: 1; margin-bottom: 0; text-align: center; padding: 12px 5px; background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.2); color: #fff;">🎹 Piano pra ela</a>
             </div>
 
@@ -217,6 +234,74 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     firebase.auth().signInAnonymously();
+
+    // Contexto de Áudio Unificado
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // --- SOM DA RASPADA ---
+    function playScratchSound() {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    // Criar um buffer de ruído branco (som de "chiado" de rádio)
+    const bufferSize = audioCtx.sampleRate * 0.05; // Duração curtinha (0.05s)
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const output = buffer.getChannelData(0);
+    
+    // Preencher o buffer com números aleatórios (gera o ruído)
+    for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+    }
+
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = buffer;
+
+    // Filtro para deixar o som mais "metálico/papel"
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 1500; // Frequência da raspagem
+    filter.Q.value = 0.5;
+
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime); // Volume
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+
+    noise.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    noise.start();
+}
+
+    // --- SOM DO CONFETE (POP FESTIVO) ---
+    function playConfettiSound() {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+        
+        // 1. O "Pop" de ar
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(10, now + 0.1);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.1);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.1);
+
+        // 2. O "Click" do papel estourando
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.type = 'square';
+        osc2.frequency.setValueAtTime(800, now);
+        gain2.gain.setValueAtTime(0.05, now);
+        gain2.gain.linearRampToValueAtTime(0, now + 0.05);
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.start(now);
+        osc2.stop(now + 0.05);
+    }
 
     function registrarClique() {
         db.ref('monitoramento/visitas_carta').push({
@@ -302,27 +387,17 @@
     let startTime;
     let hasScratched = false;
 
-    // --- FUNÇÃO MODIFICADA ABAIXO ---
     function unlockStep1() {
-        // Abre o link em nova aba
         window.open('bom-dia.html', '_blank');
-
-        // Desbloqueia a tela principal no fundo (mesma lógica de antes)
         document.getElementById('disguise-screen').style.display = 'none';
         document.getElementById('main-app').style.display = 'block';
-
-        /* PARA DESATIVAR O BOM DIA E VOLTAR AO NORMAL:
-           Basta comentar a linha "window.open" acima adicionando // no início dela.
-        */
+        if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
     function setMood(mood, emoji) {
         const feedback = document.getElementById('mood-feedback');
         feedback.style.display = 'block';
-        let msg = "";
-        if(mood === 'Radiante') msg = "Fico tão feliz por estares bem! Que o teu brilho continue assim. ✨";
-        if(mood === 'Normal') msg = "Um dia tranquilo também é uma vitória. Estou aqui contigo. 💜";
-        if(mood === 'Triste/Cansada') msg = "Sinto muito que o dia esteja pesado. Lembra-te: tu és incrível e eu estou aqui para ti. 🫂";
+        let msg = mood === 'Radiante' ? "Fico feliz por você! ✨" : "Estou aqui contigo. 💜";
         feedback.innerText = msg;
         db.ref('monitoramento/humor').push({
             data: new Date().toLocaleString('pt-BR'),
@@ -347,15 +422,17 @@
         ctx.font = 'bold 12px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('RASPE UM ELOGIO 💜', canvas.width/2, canvas.height/2 + 5);
+        
         function scratch(e) {
             if (!isDrawing) return;
+            playScratchSound();
             if(!hasScratched) {
                 db.ref('monitoramento/raspadas').push({ data: new Date().toLocaleString('pt-BR'), frase: frase });
                 hasScratched = true;
             }
             const rect = canvas.getBoundingClientRect();
-            const x = (e.clientX || e.touches[0].clientX) - rect.left;
-            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+            const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+            const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
             ctx.globalCompositeOperation = 'destination-out';
             ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI * 2); ctx.fill();
         }
@@ -368,8 +445,15 @@
     }
 
     const trigger = document.getElementById('secret-trigger');
-    trigger.addEventListener('mousedown', () => startTime = Date.now());
-    trigger.addEventListener('touchstart', (e) => { e.preventDefault(); startTime = Date.now(); });
+    trigger.addEventListener('mousedown', () => {
+        startTime = Date.now();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    });
+    trigger.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        startTime = Date.now();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    });
     trigger.addEventListener('mouseup', handleEnd);
     trigger.addEventListener('touchend', handleEnd);
 
@@ -378,6 +462,8 @@
         if (duration >= 500) {
             const senha = prompt("Chave de Segurança:");
             if (senha === "4691") {
+                // Toca o som e solta o confete juntos
+                playConfettiSound(); 
                 confetti({
                     particleCount: 150,
                     spread: 70,
@@ -392,12 +478,6 @@
                 document.getElementById('home-screen').style.display = 'none';
                 document.getElementById('diary-content').style.display = 'block';
                 document.getElementById('trash-section').style.display = 'block';
-                db.ref('monitoramento').once('value', s => {
-                    const m = s.val();
-                    const v = m.visitas_carta ? Object.keys(m.visitas_carta).length : 0;
-                    const r = m.raspadas ? Object.keys(m.raspadas).length : 0;
-                    document.getElementById('stats-content').innerHTML = `<br>✨ Carta: ${v} | 💜 Raspadinhas: ${r}`;
-                });
                 loadEntries();
                 loadTrash();
             } else if (senha) alert("Incorreto.");
@@ -407,9 +487,7 @@
     function deleteEntry(id) {
         if(confirm("Mover para a lixeira?")) {
             db.ref('entries/' + id).once('value', s => {
-                db.ref('trash/' + id).set(s.val()).then(() => {
-                    db.ref('entries/' + id).remove();
-                });
+                db.ref('trash/' + id).set(s.val()).then(() => db.ref('entries/' + id).remove());
             });
         }
     }
@@ -443,17 +521,24 @@
         });
     }
 
-    function toggleComposer(show) { document.getElementById('composer').style.display = show ? 'flex' : 'none'; }
+    function toggleComposer(show) { 
+        document.getElementById('composer').style.display = show ? 'flex' : 'none';
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
 
     async function saveEntry() {
         const comment = document.getElementById('comment').value;
         const file = document.getElementById('imageInput').files[0];
         if (!comment && !file) return;
+        
+        playConfettiSound(); // Som ao publicar
+
         const date = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
         let imgData = file ? await compressImg(file) : "";
         db.ref('entries').push({ date, comment, image: imgData }).then(() => {
             toggleComposer(false);
             document.getElementById('comment').value = "";
+            document.getElementById('imageInput').value = "";
         });
     }
 
@@ -477,3 +562,4 @@
 </script>
 </body>
 </html>
+
