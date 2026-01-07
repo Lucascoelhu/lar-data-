@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bom dia, meu amor</title>
     <style>
-        /* Tema Lilás Escuro - Confortável para quem teve dor de cabeça */
+        /* TEMA LILÁS ESCURO ORIGINAL */
         body {
             background-color: #1a1625; 
             color: #e0d7ff;
@@ -32,7 +32,7 @@
         h1 { color: #bb86fc; font-size: 1.6rem; margin-bottom: 10px; }
         p { font-size: 0.95rem; color: #b3a9d8; }
 
-        /* Bateria Interativa */
+        /* BATERIA */
         .bateria-box {
             border: 3px solid #4a3f6b;
             width: 80px;
@@ -43,7 +43,7 @@
             padding: 4px;
         }
 
-        .bateria-box::after { /* Cabinho da bateria */
+        .bateria-box::after {
             content: '';
             position: absolute;
             right: -8px;
@@ -56,25 +56,54 @@
 
         #nivel {
             background: linear-gradient(90deg, #bb86fc, #d4b3ff);
-            width: 20%; /* Começa baixinho */
+            width: 20%;
             height: 100%;
             border-radius: 4px;
             transition: width 0.8s ease;
         }
 
-        /* Lista de Cuidados */
+        /* BLOCOS DE DIÁLOGO (NOVO) */
+        #area-dialogo {
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .bloco-msg {
+            background: rgba(187, 134, 252, 0.1);
+            border: 1px solid rgba(187, 134, 252, 0.2);
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            text-align: left;
+            animation: slideIn 0.3s ease-out;
+            color: #e0d7ff;
+        }
+
+        .bloco-especial {
+            border-color: #ff79c6;
+            background: rgba(255, 121, 198, 0.1);
+            color: #ffb8e0;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* DESIGN ORIGINAL DOS CARDS */
         .card-cuidados {
             text-align: left;
             background: #241e35;
             padding: 15px;
             border-radius: 15px;
-            margin-top: 20px;
+            margin-top: 10px;
             border-left: 4px solid #bb86fc;
         }
 
         .item { margin-bottom: 8px; display: block; }
 
-        /* Botão Interativo */
         button {
             background: #bb86fc;
             color: #1a1625;
@@ -85,17 +114,14 @@
             cursor: pointer;
             margin-top: 20px;
             transition: transform 0.2s, background 0.3s;
+            width: 100%;
         }
 
-        button:hover { background: #d4b3ff; transform: scale(1.05); }
-        button:active { transform: scale(0.95); }
+        button:hover { background: #d4b3ff; transform: scale(1.02); }
+        button:active { transform: scale(0.98); }
 
         .coracao { color: #ff79c6; animation: pulsar 1.5s infinite; display: inline-block; }
-        @keyframes pulsar {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
+        @keyframes pulsar { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -109,6 +135,8 @@
             <div id="nivel"></div>
         </div>
         <small id="status-texto">Energia: 20% (Modo Recuperação)</small>
+
+        <div id="area-dialogo"></div>
 
         <div class="card-cuidados">
             <span class="item">✨ <b>Atualização:</b> Dor de cabeça removida.</span>
@@ -124,14 +152,43 @@
     </div>
 
     <script>
+        let cliques = 0;
+
         function recarregar() {
+            cliques++;
+            
+            // Lógica da Bateria
             const nivel = document.getElementById('nivel');
-            const texto = document.getElementById('status-texto');
+            const textoStatus = document.getElementById('status-texto');
             nivel.style.width = '100%';
-            nivel.style.background = '#03dac6'; // Muda para verde água ao completar
-            texto.innerText = "Energia: 100% (Pronta para o dia!)";
-            texto.style.color = "#03dac6";
-            alert("Carregamento de carinho enviado com sucesso! ❤️");
+            nivel.style.background = '#03dac6';
+            textoStatus.innerText = "Energia: 100% (Pronta!)";
+            textoStatus.style.color = "#03dac6";
+
+            const area = document.getElementById('area-dialogo');
+            area.innerHTML = ""; // Limpa os blocos anteriores
+
+            if (cliques <= 2) {
+                // Diálogo em blocos padrão
+                criarBloco("💬 <b>Sistema:</b> Carinho digital processado.");
+                setTimeout(() => {
+                    criarBloco("✅ <b>Lariê:</b> Recebido com sucesso! ❤️");
+                }, 400);
+            } else {
+                // Diálogo em bloco especial (após 3 cliques)
+                criarBloco("⚠️ <b>Aviso:</b> Limite de carinho digital atingido.");
+                setTimeout(() => {
+                    criarBloco("😏 <b>Sistema:</b> Se quiser mais carinho, terá que receber pessoalmente!", true);
+                }, 500);
+            }
+        }
+
+        function criarBloco(texto, isEspecial = false) {
+            const area = document.getElementById('area-dialogo');
+            const div = document.createElement('div');
+            div.className = isEspecial ? 'bloco-msg bloco-especial' : 'bloco-msg';
+            div.innerHTML = texto;
+            area.appendChild(div);
         }
     </script>
 
