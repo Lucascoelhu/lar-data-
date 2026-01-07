@@ -140,6 +140,7 @@
             cursor: pointer;
         }
         .main-btn:active { transform: scale(0.97); filter: brightness(1.1); }
+        .main-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
         @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
@@ -216,7 +217,7 @@
         <div style="margin-top: 15px; text-align: left;">
             <input type="file" id="imageInput" accept="image/*" style="font-size: 0.7rem; color: #71717a;">
         </div>
-        <button class="main-btn" onclick="saveEntry()">Publicar</button>
+        <button id="post-btn" class="main-btn" onclick="saveEntry()">Publicar</button>
     </div>
 </div>
 
@@ -235,72 +236,35 @@
     const db = firebase.database();
     firebase.auth().signInAnonymously();
 
-    // Contexto de Áudio Unificado
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    // --- SOM DA RASPADA ---
     function playScratchSound() {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-
-    // Criar um buffer de ruído branco (som de "chiado" de rádio)
-    const bufferSize = audioCtx.sampleRate * 0.05; // Duração curtinha (0.05s)
-    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const output = buffer.getChannelData(0);
-    
-    // Preencher o buffer com números aleatórios (gera o ruído)
-    for (let i = 0; i < bufferSize; i++) {
-        output[i] = Math.random() * 2 - 1;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const bufferSize = audioCtx.sampleRate * 0.05;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) { output[i] = Math.random() * 2 - 1; }
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass'; filter.frequency.value = 1500; filter.Q.value = 0.5;
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+        noise.connect(filter); filter.connect(gainNode); gainNode.connect(audioCtx.destination);
+        noise.start();
     }
 
-    const noise = audioCtx.createBufferSource();
-    noise.buffer = buffer;
-
-    // Filtro para deixar o som mais "metálico/papel"
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.value = 1500; // Frequência da raspagem
-    filter.Q.value = 0.5;
-
-    const gainNode = audioCtx.createGain();
-    gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime); // Volume
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-
-    noise.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
-    noise.start();
-}
-
-    // --- SOM DO CONFETE (POP FESTIVO) ---
     function playConfettiSound() {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const now = audioCtx.currentTime;
-        
-        // 1. O "Pop" de ar
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(150, now);
+        osc.type = 'sine'; osc.frequency.setValueAtTime(150, now);
         osc.frequency.exponentialRampToValueAtTime(10, now + 0.1);
-        gain.gain.setValueAtTime(0.3, now);
-        gain.gain.linearRampToValueAtTime(0, now + 0.1);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(now);
-        osc.stop(now + 0.1);
-
-        // 2. O "Click" do papel estourando
-        const osc2 = audioCtx.createOscillator();
-        const gain2 = audioCtx.createGain();
-        osc2.type = 'square';
-        osc2.frequency.setValueAtTime(800, now);
-        gain2.gain.setValueAtTime(0.05, now);
-        gain2.gain.linearRampToValueAtTime(0, now + 0.05);
-        osc2.connect(gain2);
-        gain2.connect(audioCtx.destination);
-        osc2.start(now);
-        osc2.stop(now + 0.05);
+        gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0, now + 0.1);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(now); osc.stop(now + 0.1);
     }
 
     function registrarClique() {
@@ -445,15 +409,8 @@
     }
 
     const trigger = document.getElementById('secret-trigger');
-    trigger.addEventListener('mousedown', () => {
-        startTime = Date.now();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-    });
-    trigger.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        startTime = Date.now();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-    });
+    trigger.addEventListener('mousedown', () => { startTime = Date.now(); if (audioCtx.state === 'suspended') audioCtx.resume(); });
+    trigger.addEventListener('touchstart', (e) => { e.preventDefault(); startTime = Date.now(); if (audioCtx.state === 'suspended') audioCtx.resume(); });
     trigger.addEventListener('mouseup', handleEnd);
     trigger.addEventListener('touchend', handleEnd);
 
@@ -462,14 +419,8 @@
         if (duration >= 500) {
             const senha = prompt("Chave de Segurança:");
             if (senha === "4691") {
-                // Toca o som e solta o confete juntos
                 playConfettiSound(); 
-                confetti({
-                    particleCount: 150,
-                    spread: 70,
-                    origin: { y: 0.6 },
-                    colors: ['#bb86fc', '#7c3aed', '#ffffff']
-                });
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#bb86fc', '#7c3aed', '#ffffff'] });
                 document.getElementById('home-screen').style.display = 'none';
                 document.getElementById('diary-content').style.display = 'block';
                 initScratchCard();
@@ -510,14 +461,36 @@
         });
     }
 
+    // --- NOVA FUNÇÃO LOADTRASH MELHORADA ---
     function loadTrash() {
-        db.ref('monitoramento/humor').limitToLast(5).once('value', s => {
-            const container = document.getElementById('trash-container');
-            container.innerHTML = '<b>Últimos Humores:</b><br>';
+        const statsContainer = document.getElementById('trash-container');
+        const statsContent = document.getElementById('stats-content');
+        
+        // 1. Cliques na Carta
+        db.ref('monitoramento/visitas_carta').on('value', s => {
+            const total = s.val() ? Object.keys(s.val()).length : 0;
+            statsContent.innerText = `Cliques na Carta: ${total}`;
+        });
+
+        // 2. Histórico Detalhado (Raspadinhas e Humores)
+        db.ref('monitoramento').on('value', s => {
             const data = s.val();
-            if(data) Object.keys(data).reverse().forEach(k => {
-                container.innerHTML += `<div style="font-size:0.7rem; margin-bottom:5px;">• ${data[k].data}: ${data[k].emoji} (${data[k].estado})</div>`;
-            });
+            let html = "";
+            if(data) {
+                if(data.raspadas) {
+                    html += `<b style="color:var(--primary)">💎 ÚLTIMAS RASPADINHAS:</b><br>`;
+                    Object.values(data.raspadas).reverse().slice(0, 5).forEach(r => {
+                        html += `<div style="font-size:0.7rem; margin-bottom:5px; border-bottom:1px solid #222">• ${r.data}: <br><i>"${r.frase}"</i></div>`;
+                    });
+                }
+                if(data.humor) {
+                    html += `<br><b style="color:var(--success)">🎭 HUMORES:</b><br>`;
+                    Object.values(data.humor).reverse().slice(0, 5).forEach(h => {
+                        html += `<div style="font-size:0.7rem;">• ${h.data}: ${h.emoji} (${h.estado})</div>`;
+                    });
+                }
+            }
+            statsContainer.innerHTML = html || "Nenhum dado capturado.";
         });
     }
 
@@ -526,20 +499,43 @@
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
+    // --- FUNÇÃO SAVEENTRY CORRIGIDA COM FEEDBACK --- 
     async function saveEntry() {
-        const comment = document.getElementById('comment').value;
-        const file = document.getElementById('imageInput').files[0];
-        if (!comment && !file) return;
+        const commentArea = document.getElementById('comment');
+        const imageInput = document.getElementById('imageInput');
+        const postBtn = document.getElementById('post-btn');
         
-        playConfettiSound(); // Som ao publicar
+        const comment = commentArea.value;
+        const file = imageInput.files[0];
+        
+        if (!comment && !file) return;
 
-        const date = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-        let imgData = file ? await compressImg(file) : "";
-        db.ref('entries').push({ date, comment, image: imgData }).then(() => {
+        // Feedback de carregamento
+        postBtn.disabled = true;
+        postBtn.innerText = "PUBLICANDO...";
+        postBtn.style.filter = "grayscale(1)";
+
+        try {
+            const date = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+            let imgData = file ? await compressImg(file) : "";
+            
+            // Salva no banco de dados e aguarda a resposta
+            await db.ref('entries').push({ date, comment, image: imgData });
+
+            // SÓ LIMPA SE TIVER SUCESSO
+            playConfettiSound();
+            commentArea.value = "";
+            imageInput.value = "";
             toggleComposer(false);
-            document.getElementById('comment').value = "";
-            document.getElementById('imageInput').value = "";
-        });
+            
+        } catch (error) {
+            alert("Erro ao postar: " + error.message);
+        } finally {
+            // Restaura o botão
+            postBtn.disabled = false;
+            postBtn.innerText = "Publicar";
+            postBtn.style.filter = "none";
+        }
     }
 
     function compressImg(file) {
@@ -562,4 +558,3 @@
 </script>
 </body>
 </html>
-
