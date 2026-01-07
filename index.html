@@ -113,7 +113,35 @@
         .entry img { width: 100%; border-radius: 14px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.1); }
         .btn-delete { position: absolute; top: 18px; right: 18px; background: none; color: #3f3f46; border: none; font-size: 1rem; cursor: pointer; }
 
+        /* --- ESTILOS MODO ADM / LIXEIRA --- */
         #trash-section { display: none; margin-top: 40px; border-top: 1px dashed #333; padding-top: 20px; }
+        
+        .admin-scroll-area {
+            max-height: 250px; 
+            overflow-y: auto; 
+            text-align: left;
+            padding-right: 5px;
+            margin-bottom: 20px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .admin-scroll-area::-webkit-scrollbar { width: 4px; }
+        .admin-scroll-area::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+
+        .btn-restore {
+            background: var(--success);
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            padding: 3px 8px;
+            cursor: pointer;
+            float: right;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
 
         #composer {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -202,9 +230,9 @@
 
         <div id="trash-section">
             <div id="admin-stats-box" style="background: #1a1a1e; padding: 15px; border-radius: 15px; margin-bottom: 20px; text-align: left; font-size: 0.8rem; color: var(--primary);">
-                <b>ESTATÍSTICAS DE ACESSO:</b> <span id="stats-content"></span>
+                <b>ESTATÍSTICAS:</b> <span id="stats-content">Carregando...</span>
             </div>
-            <div style="color: var(--danger); font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 15px;">🗑️ LIXEIRA & HISTÓRICO</div>
+            <div style="color: var(--danger); font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 15px; text-align: center;">🗑️ LIXEIRA & MONITORAMENTO ADM</div>
             <div id="trash-container"></div>
         </div>
     </div>
@@ -289,7 +317,7 @@
         "Não permita que nada te abale, hoje. 💪",
         "Você tem a calma do mar e a força das tempestades, tudo em um só ser. 🌊",
         "Faltam palavras para descrever o quanto você me encanta. 😍",
-        "Você é única, Larissa. Nunca mude isso. 🦄",
+        "Você é única, Larissa. Nunca mude isso. ❤️",
         "Você é aquela raridade que a gente tem sorte de encontrar. 💎",
         "Enquanto houver você, haverá um motivo para acreditar no extraordinário. ✨",
         "Sorria. Seu sorriso é um remédio perfeito. 💊",
@@ -443,6 +471,19 @@
         }
     }
 
+    // --- FUNÇÃO PARA RESTAURAR DA LIXEIRA ---
+    function restoreEntry(id) {
+        if(confirm("Deseja restaurar este registro para o feed?")) {
+            db.ref('trash/' + id).once('value', s => {
+                if(s.exists()) {
+                    db.ref('entries/' + id).set(s.val()).then(() => {
+                        db.ref('trash/' + id).remove();
+                    });
+                }
+            });
+        }
+    }
+
     function loadEntries() {
         db.ref('entries').on('value', s => {
             const container = document.getElementById('entries-container');
@@ -461,36 +502,55 @@
         });
     }
 
-    // --- NOVA FUNÇÃO LOADTRASH MELHORADA ---
+    // --- FUNÇÃO MODO ADM ATUALIZADA (COM RESTORE E SCROLL) ---
     function loadTrash() {
-        const statsContainer = document.getElementById('trash-container');
+        const trashContainer = document.getElementById('trash-container');
         const statsContent = document.getElementById('stats-content');
         
-        // 1. Cliques na Carta
-        db.ref('monitoramento/visitas_carta').on('value', s => {
-            const total = s.val() ? Object.keys(s.val()).length : 0;
-            statsContent.innerText = `Cliques na Carta: ${total}`;
-        });
-
-        // 2. Histórico Detalhado (Raspadinhas e Humores)
-        db.ref('monitoramento').on('value', s => {
-            const data = s.val();
+        db.ref().on('value', s => {
+            const root = s.val();
             let html = "";
-            if(data) {
-                if(data.raspadas) {
-                    html += `<b style="color:var(--primary)">💎 ÚLTIMAS RASPADINHAS:</b><br>`;
-                    Object.values(data.raspadas).reverse().slice(0, 5).forEach(r => {
-                        html += `<div style="font-size:0.7rem; margin-bottom:5px; border-bottom:1px solid #222">• ${r.data}: <br><i>"${r.frase}"</i></div>`;
+            
+            // Stats de Cliques
+            const cliques = root.monitoramento && root.monitoramento.visitas_carta ? Object.keys(root.monitoramento.visitas_carta).length : 0;
+            statsContent.innerText = `Cliques na Carta: ${cliques}`;
+
+            if(root) {
+                // 1. Itens Apagados (Lixeira)
+                if(root.trash) {
+                    html += `<b style="color:var(--danger)">🗑️ REGISTROS NA LIXEIRA:</b><br>`;
+                    html += `<div class="admin-scroll-area">`;
+                    Object.keys(root.trash).reverse().forEach(k => {
+                        const item = root.trash[k];
+                        html += `<div style="font-size:0.7rem; margin-bottom:10px; padding:8px; background:rgba(255,68,68,0.1); border-radius:8px; border-left:3px solid var(--danger)">
+                                    <button class="btn-restore" onclick="restoreEntry('${k}')">RESTAURAR</button>
+                                    <b>${item.date}</b><br>${item.comment ? item.comment.substring(0, 60) + '...' : '[Apenas Imagem]'}
+                                 </div>`;
                     });
+                    html += `</div>`;
                 }
-                if(data.humor) {
-                    html += `<br><b style="color:var(--success)">🎭 HUMORES:</b><br>`;
-                    Object.values(data.humor).reverse().slice(0, 5).forEach(h => {
-                        html += `<div style="font-size:0.7rem;">• ${h.data}: ${h.emoji} (${h.estado})</div>`;
+
+                // 2. Histórico de Raspadinhas
+                if(root.monitoramento && root.monitoramento.raspadas) {
+                    html += `<b style="color:var(--primary)">💎 ÚLTIMAS RASPADINHAS:</b><br>`;
+                    html += `<div class="admin-scroll-area">`;
+                    Object.values(root.monitoramento.raspadas).reverse().forEach(r => {
+                        html += `<div style="font-size:0.7rem; margin-bottom:5px; border-bottom:1px solid #222; padding-bottom:3px">• ${r.data}: <br><i>"${r.frase}"</i></div>`;
                     });
+                    html += `</div>`;
+                }
+                
+                // 3. Histórico de Humores
+                if(root.monitoramento && root.monitoramento.humor) {
+                    html += `<b style="color:var(--success)">🎭 HISTÓRICO DE HUMOR:</b><br>`;
+                    html += `<div class="admin-scroll-area">`;
+                    Object.values(root.monitoramento.humor).reverse().forEach(h => {
+                        html += `<div style="font-size:0.7rem; margin-bottom:5px;">• ${h.data}: ${h.emoji} (${h.estado})</div>`;
+                    });
+                    html += `</div>`;
                 }
             }
-            statsContainer.innerHTML = html || "Nenhum dado capturado.";
+            trashContainer.innerHTML = html || "Nenhum dado capturado.";
         });
     }
 
@@ -499,18 +559,15 @@
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
-    // --- FUNÇÃO SAVEENTRY CORRIGIDA COM FEEDBACK --- 
     async function saveEntry() {
         const commentArea = document.getElementById('comment');
         const imageInput = document.getElementById('imageInput');
         const postBtn = document.getElementById('post-btn');
-        
         const comment = commentArea.value;
         const file = imageInput.files[0];
         
         if (!comment && !file) return;
 
-        // Feedback de carregamento
         postBtn.disabled = true;
         postBtn.innerText = "PUBLICANDO...";
         postBtn.style.filter = "grayscale(1)";
@@ -518,20 +575,14 @@
         try {
             const date = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
             let imgData = file ? await compressImg(file) : "";
-            
-            // Salva no banco de dados e aguarda a resposta
             await db.ref('entries').push({ date, comment, image: imgData });
-
-            // SÓ LIMPA SE TIVER SUCESSO
             playConfettiSound();
             commentArea.value = "";
             imageInput.value = "";
             toggleComposer(false);
-            
         } catch (error) {
             alert("Erro ao postar: " + error.message);
         } finally {
-            // Restaura o botão
             postBtn.disabled = false;
             postBtn.innerText = "Publicar";
             postBtn.style.filter = "none";
