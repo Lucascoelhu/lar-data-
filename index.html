@@ -113,7 +113,6 @@
         .entry img { width: 100%; border-radius: 14px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.1); }
         .btn-delete { position: absolute; top: 18px; right: 18px; background: none; color: #3f3f46; border: none; font-size: 1rem; cursor: pointer; }
 
-        /* --- ESTILOS MODO ADM / LIXEIRA --- */
         #trash-section { display: none; margin-top: 40px; border-top: 1px dashed #333; padding-top: 20px; }
         
         .admin-scroll-area {
@@ -379,6 +378,22 @@
     let startTime;
     let hasScratched = false;
 
+    // --- NOVA LÓGICA DE SORTEIO SEM REPETIÇÃO ---
+    function obterFraseUnica() {
+        let usadas = JSON.parse(localStorage.getItem('frases_usadas') || "[]");
+        let disponiveis = frasesElogios.filter(f => !usadas.includes(f));
+
+        if (disponiveis.length === 0) {
+            usadas = [];
+            disponiveis = frasesElogios;
+        }
+
+        const fraseSorteada = disponiveis[Math.floor(Math.random() * disponiveis.length)];
+        usadas.push(fraseSorteada);
+        localStorage.setItem('frases_usadas', JSON.stringify(usadas));
+        return fraseSorteada;
+    }
+
     function unlockStep1() {
         window.open('bom-dia.html', '_blank');
         document.getElementById('disguise-screen').style.display = 'none';
@@ -404,7 +419,10 @@
         const container = canvas.parentElement;
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
-        const frase = frasesElogios[Math.floor(Math.random() * frasesElogios.length)];
+        
+        // Chamando a função que evita repetições
+        const frase = obterFraseUnica();
+        
         textElement.innerText = frase;
         canvas.width = container.offsetWidth;
         canvas.height = container.offsetHeight;
@@ -471,7 +489,6 @@
         }
     }
 
-    // --- FUNÇÃO PARA RESTAURAR DA LIXEIRA ---
     function restoreEntry(id) {
         if(confirm("Deseja restaurar este registro para o feed?")) {
             db.ref('trash/' + id).once('value', s => {
@@ -502,7 +519,6 @@
         });
     }
 
-    // --- FUNÇÃO MODO ADM ATUALIZADA (COM RESTORE E SCROLL) ---
     function loadTrash() {
         const trashContainer = document.getElementById('trash-container');
         const statsContent = document.getElementById('stats-content');
@@ -510,13 +526,10 @@
         db.ref().on('value', s => {
             const root = s.val();
             let html = "";
-            
-            // Stats de Cliques
             const cliques = root.monitoramento && root.monitoramento.visitas_carta ? Object.keys(root.monitoramento.visitas_carta).length : 0;
             statsContent.innerText = `Cliques na Carta: ${cliques}`;
 
             if(root) {
-                // 1. Itens Apagados (Lixeira)
                 if(root.trash) {
                     html += `<b style="color:var(--danger)">🗑️ REGISTROS NA LIXEIRA:</b><br>`;
                     html += `<div class="admin-scroll-area">`;
@@ -530,7 +543,6 @@
                     html += `</div>`;
                 }
 
-                // 2. Histórico de Raspadinhas
                 if(root.monitoramento && root.monitoramento.raspadas) {
                     html += `<b style="color:var(--primary)">💎 ÚLTIMAS RASPADINHAS:</b><br>`;
                     html += `<div class="admin-scroll-area">`;
@@ -540,7 +552,6 @@
                     html += `</div>`;
                 }
                 
-                // 3. Histórico de Humores
                 if(root.monitoramento && root.monitoramento.humor) {
                     html += `<b style="color:var(--success)">🎭 HISTÓRICO DE HUMOR:</b><br>`;
                     html += `<div class="admin-scroll-area">`;
@@ -565,13 +576,10 @@
         const postBtn = document.getElementById('post-btn');
         const comment = commentArea.value;
         const file = imageInput.files[0];
-        
         if (!comment && !file) return;
-
         postBtn.disabled = true;
         postBtn.innerText = "PUBLICANDO...";
         postBtn.style.filter = "grayscale(1)";
-
         try {
             const date = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
             let imgData = file ? await compressImg(file) : "";
